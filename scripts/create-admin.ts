@@ -34,13 +34,27 @@ const initializeFirebaseAdmin = () => {
 
   if (rawServiceAccount) {
     try {
-      const serviceAccount = JSON.parse(rawServiceAccount);
+      let serviceAccount: any;
+      const trimmed = rawServiceAccount.trim();
+      const possiblePath = path.resolve(trimmed);
+
+      if (fs.existsSync(possiblePath)) {
+        serviceAccount = JSON.parse(fs.readFileSync(possiblePath, 'utf-8'));
+      } else if (trimmed.startsWith('{') || trimmed.startsWith('[')) {
+        serviceAccount = JSON.parse(trimmed);
+      } else {
+        const decoded = Buffer.from(trimmed, 'base64').toString('utf-8');
+        serviceAccount = JSON.parse(decoded);
+      }
+
       return admin.initializeApp({
         credential: admin.credential.cert(serviceAccount),
         projectId: serviceAccount.project_id || process.env.FIREBASE_PROJECT_ID,
       });
     } catch (error) {
-      console.warn('⚠️ FIREBASE_SERVICE_ACCOUNT_KEY is not valid JSON. Falling back to Application Default Credentials.');
+      console.error('⚠️ FIREBASE_SERVICE_ACCOUNT_KEY is not valid JSON, a valid file path, or base64-encoded JSON.');
+      console.error('Please set FIREBASE_SERVICE_ACCOUNT_KEY to a JSON blob, base64-encoded JSON, or the path to the service account file.');
+      throw error;
     }
   }
 

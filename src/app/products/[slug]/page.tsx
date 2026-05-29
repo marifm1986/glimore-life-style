@@ -238,7 +238,7 @@ export default function ProductDetailPage({ params }: { params: Promise<{ slug: 
               onClick={handleAddToCart}
               className="flex-grow px-8 py-3 bg-primary text-black font-semibold text-xs tracking-[0.2em] uppercase hover:bg-opacity-95 transition-all dark-gold-border rounded-none flex justify-center items-center gap-2"
             >
-              <ShoppingBag className="h-4 w-4" /> Add to Order
+              <ShoppingBag className="h-4 w-4" /> Add to Basket
             </button>
 
             {/* Favorite button */}

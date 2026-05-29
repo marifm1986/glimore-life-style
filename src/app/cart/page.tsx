@@ -44,6 +44,15 @@ export default function CartPage() {
       return;
     }
 
+    const whatsappMessage = `New order from Glimore Life Style:\n\nCustomer: ${user?.email || 'guest@glimore.style'}\n\nShipping Address:\n${result.data.line1}${result.data.line2 ? `, ${result.data.line2}` : ''}, ${result.data.city}, ${result.data.state}, ${result.data.postalCode}, ${result.data.country}\n\nOrder items:\n${cart
+      .map(
+        (item) => `${item.title} x${item.quantity} - ${formatPrice(item.price * item.quantity)}`
+      )
+      .join('\n')}\n\nSubtotal: ${formatPrice(cartTotal)}\nShipping: Complimentary\nEstimated Total: ${formatPrice(cartTotal)}`;
+
+    const whatsappUrl = `https://wa.me/8801962059698?text=${encodeURIComponent(whatsappMessage)}`;
+    window.open(whatsappUrl, '_blank');
+
     try {
       const response = await fetch('/api/checkout/session', {
         method: 'POST',

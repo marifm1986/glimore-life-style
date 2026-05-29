@@ -30,18 +30,48 @@ const initializeFirebaseAdmin = () => {
     return admin.app();
   }
 
-  const rawServiceAccount = process.env.FIREBASE_SERVICE_ACCOUNT_KEY;
+  let serviceAccount = null;
 
-  if (rawServiceAccount) {
+  // Try explicit path first
+  if (process.env.FIREBASE_SERVICE_ACCOUNT_PATH) {
     try {
-      const serviceAccount = JSON.parse(rawServiceAccount);
-      return admin.initializeApp({
-        credential: admin.credential.cert(serviceAccount),
-        projectId: serviceAccount.project_id || process.env.FIREBASE_PROJECT_ID,
-      });
+      const filePath = path.resolve(process.env.FIREBASE_SERVICE_ACCOUNT_PATH);
+      if (fs.existsSync(filePath)) {
+        serviceAccount = JSON.parse(fs.readFileSync(filePath, 'utf-8'));
+        console.log('✅ Loaded service account from FIREBASE_SERVICE_ACCOUNT_PATH');
+      } else {
+        console.warn(`⚠️ FIREBASE_SERVICE_ACCOUNT_PATH file not found: ${filePath}`);
+      }
     } catch (error) {
-      console.warn('⚠️ FIREBASE_SERVICE_ACCOUNT_KEY is not valid JSON. Falling back to Application Default Credentials.');
+      console.error(`❌ Failed to parse FIREBASE_SERVICE_ACCOUNT_PATH: ${error}`);
     }
+  }
+
+  // Fallback to FIREBASE_SERVICE_ACCOUNT_KEY
+  if (!serviceAccount && process.env.FIREBASE_SERVICE_ACCOUNT_KEY) {
+    try {
+      const trimmed = process.env.FIREBASE_SERVICE_ACCOUNT_KEY.trim();
+      const possiblePath = path.resolve(trimmed);
+
+      if (fs.existsSync(possiblePath)) {
+        serviceAccount = JSON.parse(fs.readFileSync(possiblePath, 'utf-8'));
+      } else if (trimmed.startsWith('{') || trimmed.startsWith('[')) {
+        serviceAccount = JSON.parse(trimmed);
+      } else {
+        const decoded = Buffer.from(trimmed, 'base64').toString('utf-8');
+        serviceAccount = JSON.parse(decoded);
+      }
+    } catch (error) {
+      console.error('❌ FIREBASE_SERVICE_ACCOUNT_KEY is not valid JSON, a valid file path, or base64-encoded JSON.');
+      console.error('Please set FIREBASE_SERVICE_ACCOUNT_PATH to the path to your service account JSON file, or FIREBASE_SERVICE_ACCOUNT_KEY to a JSON blob, base64-encoded JSON, or file path.');
+    }
+  }
+
+  if (serviceAccount) {
+    return admin.initializeApp({
+      credential: admin.credential.cert(serviceAccount),
+      projectId: serviceAccount.project_id || process.env.FIREBASE_PROJECT_ID,
+    });
   }
 
   if (process.env.FIREBASE_PROJECT_ID) {
@@ -52,7 +82,7 @@ const initializeFirebaseAdmin = () => {
   }
 
   throw new Error(
-    'Firebase configuration not found. Please set FIREBASE_SERVICE_ACCOUNT_KEY or FIREBASE_PROJECT_ID in .env.local, or configure Google Application Default Credentials.'
+    'Firebase configuration not found. Please set FIREBASE_SERVICE_ACCOUNT_PATH or FIREBASE_SERVICE_ACCOUNT_KEY in .env.local, set FIREBASE_PROJECT_ID, or configure Google Application Default Credentials.'
   );
 };
 

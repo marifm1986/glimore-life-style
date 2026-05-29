@@ -57,7 +57,7 @@ export async function POST(request: Request) {
     // Build real line items for Stripe Checkout
     const lineItems = cartItems.map((item: any) => ({
       price_data: {
-        currency: 'usd',
+        currency: 'bdt',
         product_data: {
           name: item.title,
           images: [item.image],

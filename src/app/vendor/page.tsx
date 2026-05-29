@@ -303,7 +303,7 @@ export default function VendorDashboard() {
               {/* Numbers grid */}
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-1.5">
-                  <label className="text-[10px] tracking-widest text-zinc-500 uppercase font-semibold">Price (USD)</label>
+                  <label className="text-[10px] tracking-widest text-zinc-500 uppercase font-semibold">Price (BDT)</label>
                   <input 
                     type="number" 
                     step="0.01"

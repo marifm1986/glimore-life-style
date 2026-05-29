@@ -3,9 +3,11 @@ export function cn(...inputs: any[]) {
 }
 
 export function formatPrice(priceInCents: number): string {
-  return new Intl.NumberFormat('en-US', {
+  return new Intl.NumberFormat('bn-BD', {
     style: 'currency',
-    currency: 'USD',
+    currency: 'BDT',
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
   }).format(priceInCents / 100);
 }
 
