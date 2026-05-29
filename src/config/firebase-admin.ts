@@ -5,9 +5,15 @@ const initializeFirebaseAdmin = () => {
     return admin.app();
   }
 
-  const serviceAccount = process.env.FIREBASE_SERVICE_ACCOUNT_KEY
-    ? JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT_KEY)
-    : null;
+  let serviceAccount = null;
+  if (process.env.FIREBASE_SERVICE_ACCOUNT_KEY) {
+    try {
+      serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT_KEY);
+    } catch (parseError) {
+      console.warn('Invalid FIREBASE_SERVICE_ACCOUNT_KEY JSON; falling back to environment config.', parseError);
+      serviceAccount = null;
+    }
+  }
 
   if (serviceAccount) {
     return admin.initializeApp({
