@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { Suspense, useState, useMemo, useEffect } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { Search, SlidersHorizontal, Sparkles } from 'lucide-react';
@@ -22,7 +22,7 @@ interface InventoryItem {
   collection: string;
 }
 
-export default function CollectionPage() {
+function CollectionPageContent() {
   const searchParams = useSearchParams();
   const [items, setItems] = useState<InventoryItem[]>([]);
   const [dataLoading, setDataLoading] = useState(true);
@@ -255,5 +255,13 @@ export default function CollectionPage() {
 
       </div>
     </div>
+  );
+}
+
+export default function CollectionPage() {
+  return (
+    <Suspense>
+      <CollectionPageContent />
+    </Suspense>
   );
 }
