@@ -61,11 +61,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       const credential = await signInWithEmailAndPassword(auth, email, password);
       const idToken = await credential.user.getIdToken();
-      await fetch('/api/auth/session', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ idToken }),
-      });
+      try {
+        const res = await fetch('/api/auth/session', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ idToken }),
+        });
+        if (!res.ok) {
+          const body = await res.json().catch(() => ({}));
+          console.warn('[auth] Session cookie creation failed:', body.error || res.status);
+        }
+      } catch (sessionErr) {
+        console.warn('[auth] Session API unreachable:', sessionErr);
+      }
     } catch (e: any) {
       setLoading(false);
       throw new Error(e.message || 'Login failed');
@@ -95,11 +103,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       await setDoc(doc(db, 'users', credential.user.uid), newProfile);
 
-      await fetch('/api/auth/session', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ idToken }),
-      });
+      try {
+        const res = await fetch('/api/auth/session', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ idToken }),
+        });
+        if (!res.ok) {
+          const body = await res.json().catch(() => ({}));
+          console.warn('[auth] Session cookie creation failed:', body.error || res.status);
+        }
+      } catch (sessionErr) {
+        console.warn('[auth] Session API unreachable:', sessionErr);
+      }
     } catch (e: any) {
       setLoading(false);
       throw new Error(e.message || 'Registration failed');
