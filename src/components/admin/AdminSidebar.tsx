@@ -11,17 +11,23 @@ import {
   BarChart3,
   Settings,
   LogOut,
-  Heart,
+  ShoppingBag,
+  Crown,
+  X,
 } from 'lucide-react';
 
-export default function AdminSidebar() {
+interface AdminSidebarProps {
+  isOpen: boolean;
+  onClose: () => void;
+}
+
+export default function AdminSidebar({ isOpen, onClose }: AdminSidebarProps) {
   const router = useRouter();
   const pathname = usePathname();
-  const { logout } = useAuth();
+  const { logout, user } = useAuth();
 
   const navItems = [
     { href: '/admin', label: 'Dashboard', icon: LayoutDashboard },
-    { href: '/admin/collections', label: 'Collections', icon: Heart },
     { href: '/admin/inventory', label: 'Inventory', icon: Package },
     { href: '/admin/orders', label: 'Orders', icon: ShoppingCart },
     { href: '/admin/users', label: 'Users', icon: Users },
@@ -35,17 +41,42 @@ export default function AdminSidebar() {
   };
 
   return (
-    <aside className="w-64 bg-white border-r border-gray-200 h-screen flex flex-col fixed left-0 top-0">
-      {/* Logo */}
-      <div className="p-8 border-b border-gray-200">
-        <h1 className="text-2xl font-light tracking-wider text-gray-900">
-          GLIMORE
-        </h1>
-        <p className="text-xs text-gray-500 mt-1 tracking-widest">ADMIN</p>
+    <aside
+      className={`
+        w-64 bg-[#050507] border-r border-white/5 h-screen flex flex-col
+        fixed left-0 top-0 z-30 transition-transform duration-300
+        ${isOpen ? 'translate-x-0' : '-translate-x-full'}
+        lg:translate-x-0
+      `}
+    >
+      {/* Logo header */}
+      <div className="h-16 lg:h-28 px-6 flex flex-col justify-center lg:justify-end lg:pb-4 border-b border-white/5 shrink-0">
+        <div className="flex items-center justify-between">
+          <div>
+            <span className="font-['Cinzel'] text-xl font-bold tracking-[0.2em] gold-text">
+              GLIMORE
+            </span>
+            <span className="text-[9px] tracking-[0.4em] uppercase text-primary/60 font-semibold mt-0.5 block">
+              Admin Console
+            </span>
+          </div>
+          <button
+            onClick={onClose}
+            className="lg:hidden text-zinc-500 hover:text-white transition-colors p-1"
+            aria-label="Close menu"
+          >
+            <X size={16} />
+          </button>
+        </div>
+        {user?.superAdmin && (
+          <span className="mt-2 inline-flex items-center gap-1 px-2 py-0.5 bg-primary/15 border border-primary/30 text-primary text-[9px] font-bold tracking-[0.3em] uppercase w-fit">
+            <Crown size={9} /> Super Admin
+          </span>
+        )}
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 p-6 space-y-2">
+      <nav className="flex-1 px-4 py-6 space-y-1 overflow-y-auto">
         {navItems.map((item) => {
           const Icon = item.icon;
           const isActive = pathname === item.href;
@@ -53,27 +84,36 @@ export default function AdminSidebar() {
             <Link
               key={item.href}
               href={item.href}
-              className={`flex items-center space-x-3 px-4 py-3 rounded-lg transition-all ${
+              onClick={onClose}
+              className={`flex items-center gap-3 px-3 py-2.5 text-xs font-medium tracking-wider uppercase transition-all rounded-none ${
                 isActive
-                  ? 'bg-gray-900 text-white'
-                  : 'text-gray-700 hover:bg-gray-50'
+                  ? 'bg-primary/10 text-primary border-l-2 border-primary pl-[10px]'
+                  : 'text-zinc-500 hover:text-white hover:bg-white/5 border-l-2 border-transparent pl-[10px]'
               }`}
             >
-              <Icon size={18} />
-              <span className="text-sm font-medium">{item.label}</span>
+              <Icon size={15} />
+              <span>{item.label}</span>
             </Link>
           );
         })}
       </nav>
 
-      {/* Footer */}
-      <div className="p-6 border-t border-gray-200">
+      {/* Shop link + logout */}
+      <div className="px-4 py-4 border-t border-white/5 space-y-1 shrink-0">
+        <Link
+          href="/"
+          onClick={onClose}
+          className="flex items-center gap-3 px-3 py-2.5 text-xs font-medium tracking-wider uppercase text-zinc-500 hover:text-white hover:bg-white/5 transition-all border-l-2 border-transparent pl-[10px]"
+        >
+          <ShoppingBag size={15} />
+          <span>View Shop</span>
+        </Link>
         <button
           onClick={handleLogout}
-          className="w-full flex items-center space-x-3 px-4 py-3 text-gray-700 hover:bg-gray-50 rounded-lg transition-all text-sm"
+          className="w-full flex items-center gap-3 px-3 py-2.5 text-xs font-medium tracking-wider uppercase text-zinc-500 hover:text-destructive hover:bg-destructive/5 transition-all border-l-2 border-transparent pl-[10px]"
         >
-          <LogOut size={18} />
-          <span>Log Out</span>
+          <LogOut size={15} />
+          <span>Sign Out</span>
         </button>
       </div>
     </aside>

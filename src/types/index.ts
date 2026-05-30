@@ -3,6 +3,7 @@ export interface UserProfile {
   email: string;
   displayName: string;
   role: 'customer' | 'vendor' | 'admin';
+  superAdmin?: boolean;
   createdAt: any;
   updatedAt: any;
   vendorId?: string;

@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
-import { authAdmin } from '@/config/firebase-admin';
+import { authAdmin, dbAdmin } from '@/config/firebase-admin';
 
 export async function GET() {
   try {
@@ -11,24 +11,16 @@ export async function GET() {
       return NextResponse.json({ role: 'guest' });
     }
 
-    // Mock role parser
-    if (session.startsWith('mock-session-cookie-token-')) {
-      const role = session.replace('mock-session-cookie-token-', '');
-      return NextResponse.json({ role });
-    }
+    const decoded = await authAdmin.verifySessionCookie(session, true);
 
-    // Real Firebase Session verification
-    try {
-      const decodedClaims = await authAdmin.verifySessionCookie(session, true);
-      // Fetch user role claim (defaulting to customer if not set)
-      const role = decodedClaims.role || 'customer';
-      return NextResponse.json({ role, uid: decodedClaims.uid, email: decodedClaims.email });
-    } catch (verifyError) {
-      console.warn('Session verification failed, treating as invalid:', verifyError);
-      return NextResponse.json({ role: 'guest' }, { status: 401 });
-    }
+    // Prefer Firestore profile (most up-to-date) over stale token claims
+    const userDoc = await dbAdmin.collection('users').doc(decoded.uid).get();
+    const role = userDoc.exists
+      ? ((userDoc.data() as any)?.role ?? 'customer')
+      : (decoded.role as string | undefined) ?? 'customer';
+
+    return NextResponse.json({ role, uid: decoded.uid, email: decoded.email });
   } catch (error) {
-    console.error('Verify Role API error:', error);
-    return NextResponse.json({ role: 'guest' }, { status: 500 });
+    return NextResponse.json({ role: 'guest' }, { status: 401 });
   }
 }

@@ -4,12 +4,12 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
-import { Mail, Lock, Sparkles, User, Award, Shield } from 'lucide-react';
+import { Mail, Lock, Sparkles } from 'lucide-react';
 
 export default function LoginPage() {
   const { login } = useAuth();
   const router = useRouter();
-  
+
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -24,39 +24,18 @@ export default function LoginPage() {
       await login(email, password);
       router.push('/');
     } catch (err: any) {
-      setError(err.message || 'Credentials invalid. Please try again.');
-      setLoading(false);
-    }
-  };
-
-  const handleSimulatedLogin = async (role: 'customer' | 'vendor' | 'admin') => {
-    setLoading(true);
-    setError(null);
-
-    const emailMap = {
-      customer: 'customer@glimore.style',
-      vendor: 'vendor@glimore.style',
-      admin: 'admin@glimore.style',
-    };
-
-    try {
-      await login(emailMap[role], 'password123');
-      
-      const destination = role === 'admin' ? '/admin' : role === 'vendor' ? '/vendor' : '/';
-      router.push(destination);
-    } catch (err: any) {
-      setError('Simulation failed.');
+      setError(err.message || 'Invalid credentials. Please try again.');
       setLoading(false);
     }
   };
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-16 grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-      
-      {/* LEFT: Branding Visual editorial */}
+
+      {/* LEFT: Branding */}
       <div className="hidden lg:block relative aspect-square overflow-hidden glass p-2">
-        <div 
-          className="absolute inset-0 bg-cover bg-center filter brightness-[0.5]" 
+        <div
+          className="absolute inset-0 bg-cover bg-center filter brightness-[0.5]"
           style={{ backgroundImage: 'url("https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?q=80&w=800&auto=format&fit=crop")' }}
         />
         <div className="relative z-10 flex flex-col justify-end h-full p-8 text-left space-y-4">
@@ -70,10 +49,9 @@ export default function LoginPage() {
         </div>
       </div>
 
-      {/* RIGHT: Login Box */}
+      {/* RIGHT: Login form */}
       <div className="space-y-8 text-left max-w-md mx-auto w-full">
-        
-        {/* Header */}
+
         <div className="space-y-2">
           <span className="text-[10px] tracking-[0.3em] uppercase text-primary font-semibold flex items-center gap-1">
             <Sparkles className="h-3.5 w-3.5" /> Luxury Collective
@@ -83,45 +61,11 @@ export default function LoginPage() {
           </h1>
         </div>
 
-        {/* MOCK DEVELOPMENT QUICK SELECTORS */}
-        <div className="glass p-5 border border-primary/20 space-y-3.5 bg-primary/5">
-          <span className="text-[10px] tracking-widest text-primary uppercase font-bold block border-b border-primary/10 pb-1.5">
-            🔑 Simulation Portal (Quick Login)
-          </span>
-          <p className="text-[10px] text-zinc-400 font-light">
-            Instantly bypass Firebase Auth credentials to audit dashboard routes with simulated accounts.
-          </p>
-          <div className="grid grid-cols-3 gap-2 pt-1">
-            <button
-              onClick={() => handleSimulatedLogin('customer')}
-              className="py-2 bg-black border border-white/5 hover:border-primary text-white text-[10px] tracking-wider font-semibold uppercase flex flex-col items-center gap-1.5 transition-all"
-            >
-              <User className="h-4 w-4 text-zinc-400" />
-              Customer
-            </button>
-            <button
-              onClick={() => handleSimulatedLogin('vendor')}
-              className="py-2 bg-black border border-white/5 hover:border-primary text-white text-[10px] tracking-wider font-semibold uppercase flex flex-col items-center gap-1.5 transition-all"
-            >
-              <Award className="h-4 w-4 text-zinc-400" />
-              Vendor
-            </button>
-            <button
-              onClick={() => handleSimulatedLogin('admin')}
-              className="py-2 bg-black border border-white/5 hover:border-primary text-white text-[10px] tracking-wider font-semibold uppercase flex flex-col items-center gap-1.5 transition-all"
-            >
-              <Shield className="h-4 w-4 text-zinc-400" />
-              Admin
-            </button>
-          </div>
-        </div>
-
-        {/* Regular Login Form */}
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-1.5">
             <label className="text-[10px] tracking-widest text-zinc-500 uppercase font-semibold">Email Address</label>
             <div className="relative">
-              <input 
+              <input
                 type="email"
                 placeholder="email@example.com"
                 value={email}
@@ -136,7 +80,7 @@ export default function LoginPage() {
           <div className="space-y-1.5">
             <label className="text-[10px] tracking-widest text-zinc-500 uppercase font-semibold">Password</label>
             <div className="relative">
-              <input 
+              <input
                 type="password"
                 placeholder="••••••••"
                 value={password}
@@ -157,9 +101,9 @@ export default function LoginPage() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full py-3 bg-primary text-black font-semibold text-xs tracking-[0.2em] uppercase hover:bg-opacity-95 transition-all dark-gold-border rounded-none"
+            className="w-full py-3 bg-primary text-black font-semibold text-xs tracking-[0.2em] uppercase hover:bg-opacity-95 transition-all dark-gold-border rounded-none disabled:opacity-60"
           >
-            {loading ? 'Transmitting credentials...' : 'ENTER PORTAL'}
+            {loading ? 'Signing in...' : 'ENTER PORTAL'}
           </button>
         </form>
 

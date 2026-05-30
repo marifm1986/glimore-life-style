@@ -7,7 +7,7 @@ import { useCart } from '@/context/CartContext';
 import { ShoppingBag, User, LogOut, ShieldAlert, Award, Menu, X } from 'lucide-react';
 
 const Navbar: React.FC = () => {
-  const { user, logout, simulateRoleChange } = useAuth();
+  const { user, logout } = useAuth();
   const { cart } = useCart();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
@@ -15,33 +15,8 @@ const Navbar: React.FC = () => {
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-white/5 bg-background/80 backdrop-blur-md">
-      {/* Simulation Helper Panel */}
-      <div className="w-full bg-primary/10 text-primary px-4 py-1.5 text-xs text-center border-b border-primary/20 flex flex-wrap justify-center items-center gap-2">
-        <span className="font-semibold uppercase tracking-wider text-[10px]">Development Simulation Platform:</span>
-        <div className="flex gap-2">
-          <button 
-            onClick={() => simulateRoleChange('customer')} 
-            className="hover:underline px-1.5 py-0.5 rounded bg-black/40 hover:bg-black/80 font-medium"
-          >
-            Customer
-          </button>
-          <button 
-            onClick={() => simulateRoleChange('vendor')} 
-            className="hover:underline px-1.5 py-0.5 rounded bg-black/40 hover:bg-black/80 font-medium"
-          >
-            Vendor
-          </button>
-          <button 
-            onClick={() => simulateRoleChange('admin')} 
-            className="hover:underline px-1.5 py-0.5 rounded bg-black/40 hover:bg-black/80 font-medium"
-          >
-            Admin
-          </button>
-        </div>
-        <span className="text-[10px] opacity-70 ml-2">(Simulated user: <strong className="text-white font-medium">{user?.displayName || 'Guest'}</strong> as <strong className="text-primary font-bold uppercase">{user?.role || 'Guest'}</strong>)</span>
-      </div>
-
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex justify-between items-center">
+
         {/* Logo */}
         <Link href="/" className="flex items-center gap-2 group">
           <span className="font-['Cinzel'] text-2xl font-bold tracking-[0.2em] gold-text transition-all duration-300 group-hover:opacity-90">
@@ -49,14 +24,19 @@ const Navbar: React.FC = () => {
           </span>
         </Link>
 
-        {/* Desktop Navigation Links */}
+        {/* Desktop Nav */}
         <nav className="hidden md:flex items-center gap-8 text-sm font-medium tracking-widest text-zinc-400">
           <Link href="/" className="hover:text-primary transition-colors uppercase">Home</Link>
           <Link href="/products" className="hover:text-primary transition-colors uppercase">Collection</Link>
           {user?.role === 'vendor' && (
-            <Link href="/vendor" className="text-primary font-bold flex items-center gap-1 hover:opacity-85 transition-opacity uppercase">
-              <Award className="h-4 w-4" /> Vendor Hub
-            </Link>
+            <>
+              <Link href="/vendor" className="text-primary font-bold flex items-center gap-1 hover:opacity-85 transition-opacity uppercase">
+                <Award className="h-4 w-4" /> Vendor Hub
+              </Link>
+              <Link href="/vendor/orders" className="text-zinc-400 hover:text-primary flex items-center gap-1 transition-colors uppercase">
+                Orders
+              </Link>
+            </>
           )}
           {user?.role === 'admin' && (
             <Link href="/admin" className="text-primary font-bold flex items-center gap-1 hover:opacity-85 transition-opacity uppercase">
@@ -65,15 +45,19 @@ const Navbar: React.FC = () => {
           )}
         </nav>
 
-        {/* Action icons */}
+        {/* Desktop Actions */}
         <div className="hidden md:flex items-center gap-6">
           {user ? (
             <div className="flex items-center gap-4">
-              <span className="text-xs text-zinc-400 font-medium max-w-[120px] truncate">
+              <Link
+                href="/account"
+                className="text-xs text-zinc-400 hover:text-primary transition-colors font-medium max-w-30 truncate"
+                title="My Account"
+              >
                 {user.displayName}
-              </span>
-              <button 
-                onClick={logout} 
+              </Link>
+              <button
+                onClick={logout}
                 className="text-zinc-400 hover:text-destructive transition-colors"
                 title="Logout"
               >
@@ -86,7 +70,6 @@ const Navbar: React.FC = () => {
             </Link>
           )}
 
-          {/* Cart Icon */}
           <Link href="/cart" className="relative text-zinc-400 hover:text-primary transition-colors p-1">
             <ShoppingBag className="h-5 w-5" />
             {cartItemsCount > 0 && (
@@ -97,9 +80,8 @@ const Navbar: React.FC = () => {
           </Link>
         </div>
 
-        {/* Mobile menu trigger */}
+        {/* Mobile trigger */}
         <div className="flex items-center gap-4 md:hidden">
-          {/* Cart Icon */}
           <Link href="/cart" className="relative text-zinc-400 hover:text-primary transition-colors p-1">
             <ShoppingBag className="h-5 w-5" />
             {cartItemsCount > 0 && (
@@ -108,7 +90,6 @@ const Navbar: React.FC = () => {
               </span>
             )}
           </Link>
-
           <button
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
             className="text-zinc-400 hover:text-white p-1"
@@ -118,16 +99,21 @@ const Navbar: React.FC = () => {
         </div>
       </div>
 
-      {/* Mobile Menu Panel */}
+      {/* Mobile Menu */}
       {mobileMenuOpen && (
         <div className="md:hidden border-t border-white/5 bg-background px-4 py-6 space-y-4 animate-fadeIn">
           <nav className="flex flex-col gap-4 text-sm font-medium tracking-wider text-zinc-400">
             <Link href="/" onClick={() => setMobileMenuOpen(false)} className="hover:text-white transition-colors uppercase">Home</Link>
             <Link href="/products" onClick={() => setMobileMenuOpen(false)} className="hover:text-white transition-colors uppercase">Collection</Link>
             {user?.role === 'vendor' && (
-              <Link href="/vendor" onClick={() => setMobileMenuOpen(false)} className="text-primary font-bold flex items-center gap-1 uppercase">
-                <Award className="h-4 w-4" /> Vendor Hub
-              </Link>
+              <>
+                <Link href="/vendor" onClick={() => setMobileMenuOpen(false)} className="text-primary font-bold flex items-center gap-1 uppercase">
+                  <Award className="h-4 w-4" /> Vendor Hub
+                </Link>
+                <Link href="/vendor/orders" onClick={() => setMobileMenuOpen(false)} className="text-zinc-400 hover:text-white transition-colors uppercase">
+                  My Orders
+                </Link>
+              </>
             )}
             {user?.role === 'admin' && (
               <Link href="/admin" onClick={() => setMobileMenuOpen(false)} className="text-primary font-bold flex items-center gap-1 uppercase">
@@ -135,13 +121,19 @@ const Navbar: React.FC = () => {
               </Link>
             )}
           </nav>
-          
+
           <div className="border-t border-white/5 pt-4 flex flex-col gap-4">
             {user ? (
               <div className="flex items-center justify-between">
-                <span className="text-xs text-zinc-400">Logged in: <strong>{user.displayName}</strong></span>
-                <button 
-                  onClick={() => { logout(); setMobileMenuOpen(false); }} 
+                <Link
+                  href="/account"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="text-xs text-zinc-400 hover:text-primary transition-colors"
+                >
+                  <strong>{user.displayName}</strong> · My Account
+                </Link>
+                <button
+                  onClick={() => { logout(); setMobileMenuOpen(false); }}
                   className="text-destructive hover:opacity-80 flex items-center gap-1 text-xs uppercase tracking-wider"
                 >
                   <LogOut className="h-4 w-4" /> Logout

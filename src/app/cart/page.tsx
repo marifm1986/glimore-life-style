@@ -13,6 +13,8 @@ export default function CartPage() {
   const { user } = useAuth();
   
   const [shippingForm, setShippingForm] = useState({
+    customerName: '',
+    phone: '',
     line1: user?.shippingAddress?.line1 || '',
     line2: user?.shippingAddress?.line2 || '',
     city: user?.shippingAddress?.city || '',
@@ -44,7 +46,7 @@ export default function CartPage() {
       return;
     }
 
-    const whatsappMessage = `New order from Glimore Life Style:\n\nCustomer: ${user?.email || 'guest@glimore.style'}\n\nShipping Address:\n${result.data.line1}${result.data.line2 ? `, ${result.data.line2}` : ''}, ${result.data.city}, ${result.data.state}, ${result.data.postalCode}, ${result.data.country}\n\nOrder items:\n${cart
+    const whatsappMessage = `New order from Glimore Life Style:\n\nCustomer: ${result.data.customerName}\nPhone: ${result.data.phone}\nEmail: ${user?.email || 'guest@glimore.style'}\n\nShipping Address:\n${result.data.line1}${result.data.line2 ? `, ${result.data.line2}` : ''}, ${result.data.city}, ${result.data.state}, ${result.data.postalCode}, ${result.data.country}\n\nOrder items:\n${cart
       .map(
         (item) => `${item.title} x${item.quantity} - ${formatPrice(item.price * item.quantity)}`
       )
@@ -169,6 +171,31 @@ export default function CartPage() {
             <h3 className="font-['Cinzel'] text-sm font-semibold tracking-wider text-white border-b border-white/5 pb-3">
               Order Summary
             </h3>
+
+            {/* Contact fields */}
+            <div className="space-y-4">
+              <span className="text-[10px] tracking-widest text-zinc-500 uppercase font-semibold block">Contact Details</span>
+              <div className="space-y-3">
+                <input
+                  type="text"
+                  name="customerName"
+                  placeholder="Full Name"
+                  value={shippingForm.customerName}
+                  onChange={handleInputChange}
+                  className="w-full bg-black border border-white/10 px-3 py-2 text-xs focus:outline-none focus:border-primary text-white"
+                  required
+                />
+                <input
+                  type="tel"
+                  name="phone"
+                  placeholder="Phone Number"
+                  value={shippingForm.phone}
+                  onChange={handleInputChange}
+                  className="w-full bg-black border border-white/10 px-3 py-2 text-xs focus:outline-none focus:border-primary text-white"
+                  required
+                />
+              </div>
+            </div>
 
             {/* Address fields */}
             <div className="space-y-4">

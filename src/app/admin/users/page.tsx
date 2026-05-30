@@ -2,10 +2,8 @@
 
 import React, { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import AdminSidebar from '@/components/admin/AdminSidebar';
-import AdminHeader from '@/components/admin/AdminHeader';
 import { useAuth } from '@/context/AuthContext';
-import { RefreshCcw, Search, ShieldCheck, User, Users as UsersIcon } from 'lucide-react';
+import { RefreshCcw, Search, Users, Shield, Award, User } from 'lucide-react';
 
 type AdminUser = {
   uid: string;
@@ -24,6 +22,18 @@ const roleOptions = [
   { value: 'admin', label: 'Admin' },
 ];
 
+function RoleIcon({ role }: { role: string }) {
+  if (role === 'admin') return <Shield className="h-3 w-3" />;
+  if (role === 'vendor') return <Award className="h-3 w-3" />;
+  return <User className="h-3 w-3" />;
+}
+
+function getRoleBadgeStyle(role: string) {
+  if (role === 'admin') return 'bg-primary/10 text-primary border border-primary/20';
+  if (role === 'vendor') return 'bg-blue-500/10 text-blue-400 border border-blue-500/20';
+  return 'bg-zinc-500/10 text-zinc-400 border border-zinc-500/20';
+}
+
 export default function AdminUsersPage() {
   const router = useRouter();
   const { user, loading } = useAuth();
@@ -35,27 +45,23 @@ export default function AdminUsersPage() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!loading && user && user.role !== 'admin') {
-      router.replace('/login');
-    }
+    if (!loading && user && user.role !== 'admin') router.replace('/login');
   }, [loading, user, router]);
 
   useEffect(() => {
-    if (!loading && user?.role === 'admin') {
-      loadUsers();
-    }
+    if (!loading && user?.role === 'admin') loadUsers();
   }, [loading, user]);
 
   const loadUsers = async () => {
     setLoadingUsers(true);
     setError(null);
     try {
-      const response = await fetch('/api/admin/users', { cache: 'no-store' });
-      if (!response.ok) {
-        const payload = await response.json();
+      const res = await fetch('/api/admin/users', { cache: 'no-store' });
+      if (!res.ok) {
+        const payload = await res.json();
         throw new Error(payload.error || 'Unable to load users');
       }
-      const data = await response.json();
+      const data = await res.json();
       setUsers(data.users || []);
     } catch (err: any) {
       setError(err.message || 'Failed to fetch users');
@@ -68,13 +74,13 @@ export default function AdminUsersPage() {
     setActionLoading(uid);
     setError(null);
     try {
-      const response = await fetch('/api/admin/users', {
+      const res = await fetch('/api/admin/users', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ uid, role: newRole }),
       });
-      if (!response.ok) {
-        const payload = await response.json();
+      if (!res.ok) {
+        const payload = await res.json();
         throw new Error(payload.error || 'Unable to update role');
       }
       await loadUsers();
@@ -86,183 +92,161 @@ export default function AdminUsersPage() {
   };
 
   const filteredUsers = useMemo(() => {
-    return users.filter((currentUser) => {
-      const matchesSearch = [currentUser.displayName, currentUser.email, currentUser.vendorId || '']
-        .join(' ')
-        .toLowerCase()
-        .includes(search.toLowerCase());
-      const matchesRole = roleFilter === 'all' || currentUser.role === roleFilter;
+    return users.filter((u) => {
+      const matchesSearch = [u.displayName, u.email, u.vendorId || ''].join(' ').toLowerCase().includes(search.toLowerCase());
+      const matchesRole = roleFilter === 'all' || u.role === roleFilter;
       return matchesSearch && matchesRole;
     });
   }, [users, search, roleFilter]);
 
   const formatDate = (value: string) => {
-    try {
-      return new Date(value).toLocaleDateString('en-US', {
-        month: 'short',
-        day: 'numeric',
-        year: 'numeric',
-      });
-    } catch {
-      return value;
-    }
+    try { return new Date(value).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }); }
+    catch { return value; }
   };
 
   if (loading || !user) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-gray-50">
-        <div className="text-center">
-          <div className="animate-spin inline-block w-12 h-12 border-4 border-gray-300 border-t-gray-900 rounded-full" />
-          <p className="mt-4 text-gray-600">Loading users...</p>
-        </div>
+      <div className="min-h-96 flex items-center justify-center">
+        <p className="text-zinc-500 text-xs">Verifying access...</p>
       </div>
     );
   }
 
   return (
-    <div className="flex bg-gray-50 min-h-screen">
-      <AdminSidebar />
-      <main className="flex-1 ml-64">
-        <AdminHeader />
-        <div className="px-8 py-6 max-w-7xl mx-auto">
-          <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between mb-8">
-            <div>
-              <p className="text-sm uppercase tracking-[0.3em] text-zinc-500 mb-2">Admin Panel</p>
-              <h1 className="text-3xl font-semibold text-gray-900 flex items-center gap-2">
-                <UsersIcon size={28} /> User Management
-              </h1>
-              <p className="text-sm text-gray-500 max-w-2xl mt-2">
-                Review registered accounts, manage user roles, and keep customer activity aligned with your boutique workflow.
-              </p>
-            </div>
-            <div className="flex flex-col sm:flex-row gap-3">
-              <button
-                type="button"
-                onClick={loadUsers}
-                className="inline-flex items-center justify-center gap-2 rounded-lg border border-gray-200 bg-white px-4 py-3 text-sm font-medium text-gray-700 hover:bg-gray-50 transition"
-              >
-                <RefreshCcw size={16} /> Refresh
-              </button>
-            </div>
-          </div>
+    <div className="px-4 sm:px-8 py-6 sm:py-8 space-y-8">
 
-          <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm mb-6">
-            <div className="grid gap-4 lg:grid-cols-[1fr_180px]">
-              <label className="w-full">
-                <span className="text-xs uppercase tracking-[0.3em] text-zinc-500">Search users</span>
-                <div className="mt-2 relative rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 focus-within:border-primary">
-                  <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-400" />
-                  <input
-                    value={search}
-                    onChange={(e) => setSearch(e.target.value)}
-                    placeholder="Search by name, email or vendor ID"
-                    className="w-full bg-transparent pl-9 text-sm text-gray-900 outline-none"
-                  />
-                </div>
-              </label>
-
-              <label className="w-full">
-                <span className="text-xs uppercase tracking-[0.3em] text-zinc-500">Filter role</span>
-                <select
-                  value={roleFilter}
-                  onChange={(e) => setRoleFilter(e.target.value as any)}
-                  className="mt-2 w-full rounded-lg border border-gray-200 bg-white px-3 py-3 text-sm text-gray-900 outline-none"
-                >
-                  {roleOptions.map((option) => (
-                    <option key={option.value} value={option.value}>
-                      {option.label}
-                    </option>
-                  ))}
-                </select>
-              </label>
-            </div>
-          </div>
-
-          {error && (
-            <div className="mb-6 rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700">
-              {error}
-            </div>
-          )}
-
-          <div className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
-            <table className="min-w-full divide-y divide-gray-200 text-left">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th className="px-6 py-4 text-xs font-semibold uppercase tracking-[0.3em] text-zinc-600">Name</th>
-                  <th className="px-6 py-4 text-xs font-semibold uppercase tracking-[0.3em] text-zinc-600">Email</th>
-                  <th className="px-6 py-4 text-xs font-semibold uppercase tracking-[0.3em] text-zinc-600">Role</th>
-                  <th className="px-6 py-4 text-xs font-semibold uppercase tracking-[0.3em] text-zinc-600">Vendor ID</th>
-                  <th className="px-6 py-4 text-xs font-semibold uppercase tracking-[0.3em] text-zinc-600">Created</th>
-                  <th className="px-6 py-4 text-xs font-semibold uppercase tracking-[0.3em] text-zinc-600">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-100">
-                {loadingUsers ? (
-                  <tr>
-                    <td colSpan={6} className="px-6 py-12 text-center text-sm text-zinc-500">
-                      Loading users...
-                    </td>
-                  </tr>
-                ) : filteredUsers.length === 0 ? (
-                  <tr>
-                    <td colSpan={6} className="px-6 py-12 text-center text-sm text-zinc-500">
-                      No matching users found.
-                    </td>
-                  </tr>
-                ) : (
-                  filteredUsers.map((userItem) => {
-                    const isCurrentAdmin = userItem.uid === user.uid;
-                    return (
-                      <tr key={userItem.uid}>
-                        <td className="px-6 py-4 text-sm font-medium text-gray-900">{userItem.displayName}</td>
-                        <td className="px-6 py-4 text-sm text-gray-500">{userItem.email}</td>
-                        <td className="px-6 py-4">
-                          <span className="inline-flex rounded-full bg-zinc-100 px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-zinc-700">
-                            {userItem.role}
-                          </span>
-                        </td>
-                        <td className="px-6 py-4 text-sm text-gray-500">{userItem.vendorId || '—'}</td>
-                        <td className="px-6 py-4 text-sm text-gray-500">{formatDate(userItem.createdAt)}</td>
-                        <td className="px-6 py-4">
-                          <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-                            <button
-                              type="button"
-                              disabled={actionLoading === userItem.uid || isCurrentAdmin}
-                              onClick={() => updateUserRole(userItem.uid, 'customer')}
-                              className="rounded-full border border-gray-200 bg-white px-3 py-1 text-xs font-semibold text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
-                            >
-                              Customer
-                            </button>
-                            <button
-                              type="button"
-                              disabled={actionLoading === userItem.uid || isCurrentAdmin}
-                              onClick={() => updateUserRole(userItem.uid, 'vendor')}
-                              className="rounded-full border border-gray-200 bg-white px-3 py-1 text-xs font-semibold text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
-                            >
-                              Vendor
-                            </button>
-                            <button
-                              type="button"
-                              disabled={actionLoading === userItem.uid || isCurrentAdmin}
-                              onClick={() => updateUserRole(userItem.uid, 'admin')}
-                              className="rounded-full border border-gray-200 bg-white px-3 py-1 text-xs font-semibold text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
-                            >
-                              Admin
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    );
-                  })
-                )}
-              </tbody>
-            </table>
-          </div>
-          <p className="mt-4 text-xs text-zinc-500">
-            Use the role buttons to update account access levels. Role changes are applied in the Firestore user profile.
+      {/* Page header */}
+      <div className="border-b border-white/5 pb-6 flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+        <div>
+          <span className="text-[10px] tracking-[0.3em] uppercase text-primary font-semibold flex items-center gap-1 mb-1">
+            <Users className="h-3.5 w-3.5" /> Account Registry
+          </span>
+          <h1 className="font-['Cinzel'] text-2xl font-bold tracking-widest text-white">USER MANAGEMENT</h1>
+          <p className="text-zinc-500 text-xs mt-1 font-light">
+            Review registered accounts, manage roles, and control platform access.
           </p>
         </div>
-      </main>
+        <button
+          onClick={loadUsers}
+          className="flex items-center gap-2 px-4 py-2.5 border border-white/10 text-zinc-400 text-xs font-semibold tracking-wider uppercase hover:border-primary hover:text-white transition-all self-start sm:self-auto"
+        >
+          <RefreshCcw className="h-3.5 w-3.5" /> Refresh
+        </button>
+      </div>
+
+      {/* Stats */}
+      <div className="grid grid-cols-1 sm:grid-cols-4 gap-5">
+        {[
+          { label: 'Total Accounts', value: users.length, color: 'text-white' },
+          { label: 'Customers', value: users.filter(u => u.role === 'customer').length, color: 'text-zinc-400' },
+          { label: 'Vendors', value: users.filter(u => u.role === 'vendor').length, color: 'text-blue-400' },
+          { label: 'Admins', value: users.filter(u => u.role === 'admin').length, color: 'text-primary' },
+        ].map((stat) => (
+          <div key={stat.label} className="glass p-5 border border-white/5 space-y-1">
+            <span className="text-[10px] text-zinc-500 uppercase tracking-widest font-semibold">{stat.label}</span>
+            <p className={`text-xl font-semibold ${stat.color}`}>{stat.value}</p>
+          </div>
+        ))}
+      </div>
+
+      {/* Filters */}
+      <div className="flex flex-col sm:flex-row gap-4">
+        <div className="relative flex-1 max-w-sm">
+          <input
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search by name, email or vendor ID..."
+            className="w-full bg-black border border-white/10 px-3.5 py-2 pl-9 text-xs focus:outline-none focus:border-primary text-white"
+          />
+          <Search className="absolute left-3 top-2.5 h-3.5 w-3.5 text-zinc-600" />
+        </div>
+        <select
+          value={roleFilter}
+          onChange={(e) => setRoleFilter(e.target.value as any)}
+          className="bg-black border border-white/10 px-3 py-2 text-xs text-zinc-400 focus:outline-none focus:border-primary focus:text-white w-40"
+        >
+          {roleOptions.map((opt) => (
+            <option key={opt.value} value={opt.value}>{opt.label}</option>
+          ))}
+        </select>
+      </div>
+
+      {/* Error */}
+      {error && (
+        <div className="p-4 border border-red-500/20 bg-red-500/5 text-red-400 text-xs rounded">
+          ⚠ {error}
+        </div>
+      )}
+
+      {/* Table */}
+      <div className="glass border border-white/5 overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="w-full text-xs text-zinc-400">
+            <thead className="bg-black/40 text-zinc-600 uppercase tracking-widest text-[9px] border-b border-white/5">
+              <tr>
+                <th className="px-5 py-3.5 text-left font-semibold">Name</th>
+                <th className="px-5 py-3.5 text-left font-semibold">Email</th>
+                <th className="px-5 py-3.5 text-left font-semibold">Role</th>
+                <th className="px-5 py-3.5 text-left font-semibold">Vendor ID</th>
+                <th className="px-5 py-3.5 text-left font-semibold">Joined</th>
+                <th className="px-5 py-3.5 text-left font-semibold">Change Role</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-white/5">
+              {loadingUsers ? (
+                <tr>
+                  <td colSpan={6} className="px-5 py-12 text-center text-zinc-600 text-xs">Loading accounts...</td>
+                </tr>
+              ) : filteredUsers.length === 0 ? (
+                <tr>
+                  <td colSpan={6} className="px-5 py-12 text-center text-zinc-600 text-xs">No matching accounts found.</td>
+                </tr>
+              ) : filteredUsers.map((u) => {
+                const isSelf = u.uid === user.uid;
+                return (
+                  <tr key={u.uid} className="hover:bg-white/[0.02] transition-colors">
+                    <td className="px-5 py-3.5 font-medium text-white text-[11px]">{u.displayName}</td>
+                    <td className="px-5 py-3.5 text-zinc-500">{u.email}</td>
+                    <td className="px-5 py-3.5">
+                      <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider ${getRoleBadgeStyle(u.role)}`}>
+                        <RoleIcon role={u.role} /> {u.role}
+                      </span>
+                    </td>
+                    <td className="px-5 py-3.5 font-mono text-[10px] text-zinc-600">{u.vendorId || '—'}</td>
+                    <td className="px-5 py-3.5 text-zinc-600">{formatDate(u.createdAt)}</td>
+                    <td className="px-5 py-3.5">
+                      {isSelf ? (
+                        <span className="text-[9px] text-zinc-600 italic">Current session</span>
+                      ) : (
+                        <div className="flex gap-1.5">
+                          {(['customer', 'vendor', 'admin'] as const).map((role) => (
+                            <button
+                              key={role}
+                              disabled={actionLoading === u.uid || u.role === role}
+                              onClick={() => updateUserRole(u.uid, role)}
+                              className={`px-2.5 py-1 text-[9px] font-semibold uppercase tracking-wider border transition-all rounded-full ${
+                                u.role === role
+                                  ? 'border-primary/30 bg-primary/10 text-primary cursor-default'
+                                  : 'border-white/10 text-zinc-500 hover:border-primary hover:text-white disabled:opacity-30 disabled:cursor-not-allowed'
+                              }`}
+                            >
+                              {role}
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <p className="text-[10px] text-zinc-600">
+        Role changes update the Firestore user profile immediately. The affected user must re-login to receive updated permissions.
+      </p>
     </div>
   );
 }

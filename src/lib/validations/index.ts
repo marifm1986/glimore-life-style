@@ -19,6 +19,8 @@ export const productSchema = z.object({
 });
 
 export const shippingAddressSchema = z.object({
+  customerName: z.string().min(2, 'Full name is required'),
+  phone: z.string().min(7, 'Phone number is required'),
   line1: z.string().min(5, 'Address line 1 is required'),
   line2: z.string().optional(),
   city: z.string().min(2, 'City is required'),
