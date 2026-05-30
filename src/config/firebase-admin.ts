@@ -6,22 +6,20 @@ function parseServiceAccount(): admin.ServiceAccount | null {
 
   let parsed: any = null;
 
-  // Try raw JSON first
   if (raw.startsWith('{')) {
     try { parsed = JSON.parse(raw); } catch { /* fall through */ }
   }
 
-  // Try base64-encoded JSON
   if (!parsed) {
     try { parsed = JSON.parse(Buffer.from(raw, 'base64').toString('utf-8')); } catch { /* fall through */ }
   }
 
   if (!parsed) {
-    console.error('[firebase-admin] Could not parse FIREBASE_SERVICE_ACCOUNT_KEY — check its format in Vercel env vars.');
+    console.error('[firebase-admin] Could not parse FIREBASE_SERVICE_ACCOUNT_KEY.');
     return null;
   }
 
-  // Vercel escapes newlines in env vars — restore them in the private key
+  // Vercel stores newlines as literal \n in env vars — restore them
   if (parsed.private_key) {
     parsed.private_key = parsed.private_key.replace(/\\n/g, '\n');
   }
@@ -29,41 +27,70 @@ function parseServiceAccount(): admin.ServiceAccount | null {
   return parsed as admin.ServiceAccount;
 }
 
-function initializeFirebaseAdmin(): admin.app.App {
-  if (admin.apps.length > 0) return admin.app();
+let _app: admin.app.App | null = null;
+let _initError: Error | null = null;
 
-  const serviceAccount = parseServiceAccount();
+function getAdminApp(): admin.app.App {
+  if (_app) return _app;
+  if (_initError) throw _initError;
 
-  if (serviceAccount) {
-    return admin.initializeApp({
-      credential: admin.credential.cert(serviceAccount),
-      projectId: (serviceAccount as any).project_id || process.env.FIREBASE_PROJECT_ID,
-    });
+  if (admin.apps.length > 0) {
+    _app = admin.app();
+    return _app;
   }
 
-  const projectId = process.env.FIREBASE_PROJECT_ID;
-  if (!projectId) {
+  try {
+    const serviceAccount = parseServiceAccount();
+
+    if (serviceAccount) {
+      _app = admin.initializeApp({
+        credential: admin.credential.cert(serviceAccount),
+        projectId: (serviceAccount as any).project_id || process.env.FIREBASE_PROJECT_ID,
+      });
+      return _app;
+    }
+
+    const projectId = process.env.FIREBASE_PROJECT_ID;
+    if (projectId) {
+      _app = admin.initializeApp({
+        credential: admin.credential.applicationDefault(),
+        projectId,
+      });
+      return _app;
+    }
+
     throw new Error(
-      '[firebase-admin] No credentials found. Set FIREBASE_SERVICE_ACCOUNT_KEY (JSON or base64) in your Vercel environment variables.'
+      'Firebase Admin SDK not configured. ' +
+      'Add FIREBASE_SERVICE_ACCOUNT_KEY (JSON or base64) to your Vercel environment variables.'
     );
+  } catch (e: any) {
+    _initError = e;
+    throw e;
   }
-
-  // Local dev with Application Default Credentials (gcloud auth)
-  return admin.initializeApp({
-    credential: admin.credential.applicationDefault(),
-    projectId,
-  });
 }
 
-const adminApp = initializeFirebaseAdmin();
-const authAdmin = admin.auth(adminApp);
-const dbAdmin = admin.firestore(adminApp);
+// Lazy proxies — only initialize when first called
+export const authAdmin = new Proxy({} as admin.auth.Auth, {
+  get(_target, prop) {
+    const app = getAdminApp();
+    const auth = admin.auth(app);
+    return (auth as any)[prop];
+  },
+});
 
-try {
-  dbAdmin.settings({ ignoreUndefinedProperties: true });
-} catch {
-  // Already set
-}
+export const dbAdmin = new Proxy({} as admin.firestore.Firestore, {
+  get(_target, prop) {
+    const app = getAdminApp();
+    const db = admin.firestore(app);
+    try { db.settings({ ignoreUndefinedProperties: true }); } catch { /* already set */ }
+    return (db as any)[prop];
+  },
+});
 
-export { adminApp, authAdmin, dbAdmin };
+export const adminApp = new Proxy({} as admin.app.App, {
+  get(_target, prop) {
+    return (getAdminApp() as any)[prop];
+  },
+});
+
 export default adminApp;
