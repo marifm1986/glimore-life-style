@@ -3,7 +3,7 @@ export function cn(...inputs: any[]) {
 }
 
 export function formatPrice(priceInCents: number): string {
-  return new Intl.NumberFormat('bn-BD', {
+  return new Intl.NumberFormat('en-US', {
     style: 'currency',
     currency: 'BDT',
     minimumFractionDigits: 2,

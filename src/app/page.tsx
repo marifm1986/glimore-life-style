@@ -73,40 +73,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* VALUE PROPOSITIONS */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
-          <div className="glass p-8 text-center border border-white/5 flex flex-col items-center space-y-4">
-            <div className="p-3.5 rounded-full bg-primary/10 border border-primary/20 text-primary">
-              <Compass className="h-6 w-6" />
-            </div>
-            <h3 className="font-['Cinzel'] text-lg font-semibold tracking-wider text-white">Avant-Garde Curation</h3>
-            <p className="text-zinc-500 text-xs leading-relaxed font-light">
-              We exclusively partner with highly acclaimed independent fashion houses, selecting only a limited number of items to assure unparalleled uniqueness.
-            </p>
-          </div>
-
-          <div className="glass p-8 text-center border border-white/5 flex flex-col items-center space-y-4">
-            <div className="p-3.5 rounded-full bg-primary/10 border border-primary/20 text-primary">
-              <ShieldCheck className="h-6 w-6" />
-            </div>
-            <h3 className="font-['Cinzel'] text-lg font-semibold tracking-wider text-white">Verified Authenticity</h3>
-            <p className="text-zinc-500 text-xs leading-relaxed font-light">
-              Every single product in our boutique undergoes rigorous verification by industry specialists to promise genuine designer craftsmanship.
-            </p>
-          </div>
-
-          <div className="glass p-8 text-center border border-white/5 flex flex-col items-center space-y-4">
-            <div className="p-3.5 rounded-full bg-primary/10 border border-primary/20 text-primary">
-              <ShoppingBag className="h-6 w-6" />
-            </div>
-            <h3 className="font-['Cinzel'] text-lg font-semibold tracking-wider text-white">Split Vendor Checkout</h3>
-            <p className="text-zinc-500 text-xs leading-relaxed font-light">
-              Buy from multiple global brands in a single purchase. Our Stripe Connect architecture splits payouts and coordinates fulfillment securely.
-            </p>
-          </div>
-        </div>
-      </section>
+    
 
       {/* FEATURED COLLECTION */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
@@ -182,29 +149,37 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* EDITORIAL */}
+  {/* VALUE PROPOSITIONS */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-          <div className="relative aspect-[4/5] sm:aspect-square overflow-hidden glass border border-white/10 p-2">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src="https://images.unsplash.com/photo-1509631179647-0177331693ae?q=80&w=800&auto=format&fit=crop"
-              alt="Editorial model"
-              className="w-full h-full object-cover filter brightness-[0.7]"
-            />
-          </div>
-          <div className="space-y-6 text-left">
-            <span className="text-[10px] tracking-[0.3em] uppercase text-primary font-semibold">Behind The Seams</span>
-            <h2 className="font-['Cinzel'] text-3xl sm:text-5xl font-bold tracking-widest text-white leading-tight">ARTISANAL SUSTAINABILITY</h2>
-            <p className="text-zinc-400 text-sm leading-relaxed font-light">
-              At GLIMORE, we believe fashion should be eternal, not transient. Our curated collection focuses on limited-edition, slow-fashion masterpieces. By sourcing directly from independent creators, we support traditional couture techniques and guarantee ethical, high-standard working environments.
-            </p>
-            <div className="pt-4 border-t border-white/5">
-              <blockquote className="font-['Cinzel'] text-base italic text-primary font-medium tracking-wide">
-                &ldquo;Fashion is the armor to survive the reality of everyday life.&rdquo;
-              </blockquote>
-              <cite className="block text-[10px] text-zinc-500 uppercase tracking-widest mt-2">&mdash; Maison de L&apos;Or Creative Lead</cite>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
+          <div className="glass p-8 text-center border border-white/5 flex flex-col items-center space-y-4">
+            <div className="p-3.5 rounded-full bg-primary/10 border border-primary/20 text-primary">
+              <Compass className="h-6 w-6" />
             </div>
+            <h3 className="font-['Cinzel'] text-lg font-semibold tracking-wider text-white">Avant-Garde Curation</h3>
+            <p className="text-zinc-500 text-xs leading-relaxed font-light">
+              We exclusively partner with highly acclaimed independent fashion houses, selecting only a limited number of items to assure unparalleled uniqueness.
+            </p>
+          </div>
+
+          <div className="glass p-8 text-center border border-white/5 flex flex-col items-center space-y-4">
+            <div className="p-3.5 rounded-full bg-primary/10 border border-primary/20 text-primary">
+              <ShieldCheck className="h-6 w-6" />
+            </div>
+            <h3 className="font-['Cinzel'] text-lg font-semibold tracking-wider text-white">Verified Authenticity</h3>
+            <p className="text-zinc-500 text-xs leading-relaxed font-light">
+              Every single product in our boutique undergoes rigorous verification by industry specialists to promise genuine designer craftsmanship.
+            </p>
+          </div>
+
+          <div className="glass p-8 text-center border border-white/5 flex flex-col items-center space-y-4">
+            <div className="p-3.5 rounded-full bg-primary/10 border border-primary/20 text-primary">
+              <ShoppingBag className="h-6 w-6" />
+            </div>
+            <h3 className="font-['Cinzel'] text-lg font-semibold tracking-wider text-white">Split Vendor Checkout</h3>
+            <p className="text-zinc-500 text-xs leading-relaxed font-light">
+              Buy from multiple global brands in a single purchase. Our Stripe Connect architecture splits payouts and coordinates fulfillment securely.
+            </p>
           </div>
         </div>
       </section>

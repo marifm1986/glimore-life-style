@@ -2,6 +2,7 @@
 
 import React, { useState, useMemo, useEffect } from 'react';
 import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
 import { Search, SlidersHorizontal, Sparkles } from 'lucide-react';
 import { formatPrice } from '@/lib/utils';
 import { collection, onSnapshot, query, orderBy } from 'firebase/firestore';
@@ -22,12 +23,18 @@ interface InventoryItem {
 }
 
 export default function CollectionPage() {
+  const searchParams = useSearchParams();
   const [items, setItems] = useState<InventoryItem[]>([]);
   const [dataLoading, setDataLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [sortBy, setSortBy] = useState('featured');
-  const [priceRange, setPriceRange] = useState(1000000);
+  const [priceRange, setPriceRange] = useState(0);
+
+  useEffect(() => {
+    const cat = searchParams.get('category');
+    if (cat) setSelectedCategory(cat);
+  }, [searchParams]);
 
   useEffect(() => {
     const q = query(collection(db, 'inventory'), orderBy('createdAt', 'desc'));
@@ -37,6 +44,13 @@ export default function CollectionPage() {
     });
     return () => unsubscribe();
   }, []);
+
+  const minPrice = useMemo(() => items.length ? Math.min(...items.map(i => i.price)) : 0, [items]);
+  const maxPrice = useMemo(() => items.length ? Math.max(...items.map(i => i.price)) : 0, [items]);
+
+  useEffect(() => {
+    if (maxPrice > 0) setPriceRange(maxPrice);
+  }, [maxPrice]);
 
   const categories = useMemo(
     () => ['All', ...Array.from(new Set(items.map(i => i.category)))],
@@ -122,18 +136,23 @@ export default function CollectionPage() {
           {/* Price Range */}
           <div className="space-y-2">
             <div className="flex justify-between items-center text-[10px] tracking-widest text-zinc-500 uppercase font-semibold">
-              <span>Max Price</span>
+              <span>Price Range</span>
               <span className="text-primary font-bold">{formatPrice(priceRange)}</span>
             </div>
             <input
               type="range"
-              min={10000}
-              max={1000000}
-              step={10000}
+              min={minPrice}
+              max={maxPrice}
+              step={Math.max(1, Math.round((maxPrice - minPrice) / 100))}
               value={priceRange}
               onChange={(e) => setPriceRange(Number(e.target.value))}
               className="w-full accent-primary bg-zinc-800"
+              disabled={maxPrice === 0}
             />
+            <div className="flex justify-between text-[9px] text-zinc-600">
+              <span>{formatPrice(minPrice)}</span>
+              <span>{formatPrice(maxPrice)}</span>
+            </div>
           </div>
 
           {/* Sort */}

@@ -3,7 +3,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
-import { RefreshCcw, Search, Users, Shield, Award, User } from 'lucide-react';
+import { RefreshCcw, Search, Users, Shield, Award, User, UserPlus, X } from 'lucide-react';
 
 type AdminUser = {
   uid: string;
@@ -43,6 +43,10 @@ export default function AdminUsersPage() {
   const [loadingUsers, setLoadingUsers] = useState(false);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [showAddForm, setShowAddForm] = useState(false);
+  const [addForm, setAddForm] = useState({ displayName: '', email: '', password: '', role: 'customer' as 'customer' | 'vendor' | 'admin' });
+  const [addLoading, setAddLoading] = useState(false);
+  const [addError, setAddError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!loading && user && user.role !== 'admin') router.replace('/login');
@@ -91,6 +95,28 @@ export default function AdminUsersPage() {
     }
   };
 
+  const createUser = async (e: React.SyntheticEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setAddLoading(true);
+    setAddError(null);
+    try {
+      const res = await fetch('/api/admin/users', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(addForm),
+      });
+      const payload = await res.json();
+      if (!res.ok) throw new Error(payload.error || 'Failed to create user');
+      setShowAddForm(false);
+      setAddForm({ displayName: '', email: '', password: '', role: 'customer' });
+      await loadUsers();
+    } catch (err: any) {
+      setAddError(err.message || 'Failed to create user');
+    } finally {
+      setAddLoading(false);
+    }
+  };
+
   const filteredUsers = useMemo(() => {
     return users.filter((u) => {
       const matchesSearch = [u.displayName, u.email, u.vendorId || ''].join(' ').toLowerCase().includes(search.toLowerCase());
@@ -126,13 +152,109 @@ export default function AdminUsersPage() {
             Review registered accounts, manage roles, and control platform access.
           </p>
         </div>
-        <button
-          onClick={loadUsers}
-          className="flex items-center gap-2 px-4 py-2.5 border border-white/10 text-zinc-400 text-xs font-semibold tracking-wider uppercase hover:border-primary hover:text-white transition-all self-start sm:self-auto"
-        >
-          <RefreshCcw className="h-3.5 w-3.5" /> Refresh
-        </button>
+        <div className="flex gap-2 self-start sm:self-auto">
+          <button
+            onClick={() => setShowAddForm(true)}
+            className="flex items-center gap-2 px-4 py-2.5 bg-primary text-black text-xs font-semibold tracking-wider uppercase hover:bg-opacity-90 transition-all"
+          >
+            <UserPlus className="h-3.5 w-3.5" /> Add User
+          </button>
+          <button
+            onClick={loadUsers}
+            className="flex items-center gap-2 px-4 py-2.5 border border-white/10 text-zinc-400 text-xs font-semibold tracking-wider uppercase hover:border-primary hover:text-white transition-all"
+          >
+            <RefreshCcw className="h-3.5 w-3.5" /> Refresh
+          </button>
+        </div>
       </div>
+
+      {/* Add User Panel */}
+      {showAddForm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
+          <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={() => setShowAddForm(false)} />
+          <div className="relative z-10 w-full max-w-md glass border border-white/10 p-6 space-y-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="font-['Cinzel'] text-sm font-bold tracking-widest text-white">ADD USER</h3>
+                <p className="text-[10px] text-zinc-500 mt-0.5">Create a new account with Firebase Auth</p>
+              </div>
+              <button onClick={() => setShowAddForm(false)} className="text-zinc-500 hover:text-white transition-colors">
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+
+            <form onSubmit={createUser} className="space-y-4">
+              <div className="space-y-1.5">
+                <label className="text-[10px] tracking-widest text-zinc-500 uppercase font-semibold">Full Name</label>
+                <input
+                  type="text"
+                  required
+                  value={addForm.displayName}
+                  onChange={e => setAddForm(p => ({ ...p, displayName: e.target.value }))}
+                  placeholder="John Doe"
+                  className="w-full bg-black border border-white/10 px-3 py-2 text-xs focus:outline-none focus:border-primary text-white"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-[10px] tracking-widest text-zinc-500 uppercase font-semibold">Email</label>
+                <input
+                  type="email"
+                  required
+                  value={addForm.email}
+                  onChange={e => setAddForm(p => ({ ...p, email: e.target.value }))}
+                  placeholder="user@example.com"
+                  className="w-full bg-black border border-white/10 px-3 py-2 text-xs focus:outline-none focus:border-primary text-white"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-[10px] tracking-widest text-zinc-500 uppercase font-semibold">Password</label>
+                <input
+                  type="password"
+                  required
+                  minLength={6}
+                  value={addForm.password}
+                  onChange={e => setAddForm(p => ({ ...p, password: e.target.value }))}
+                  placeholder="Min. 6 characters"
+                  className="w-full bg-black border border-white/10 px-3 py-2 text-xs focus:outline-none focus:border-primary text-white"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-[10px] tracking-widest text-zinc-500 uppercase font-semibold">Role</label>
+                <select
+                  value={addForm.role}
+                  onChange={e => setAddForm(p => ({ ...p, role: e.target.value as typeof addForm.role }))}
+                  className="w-full bg-black border border-white/10 px-3 py-2 text-xs focus:outline-none focus:border-primary text-zinc-400 focus:text-white"
+                >
+                  <option value="customer">Customer</option>
+                  <option value="vendor">Vendor</option>
+                  <option value="admin">Admin</option>
+                </select>
+              </div>
+
+              {addError && (
+                <p className="text-[10px] text-red-400 bg-red-500/10 border border-red-500/20 p-2.5">⚠ {addError}</p>
+              )}
+
+              <div className="flex gap-3 pt-2">
+                <button
+                  type="submit"
+                  disabled={addLoading}
+                  className="flex-1 py-2.5 bg-primary text-black font-semibold text-xs tracking-[0.15em] uppercase hover:bg-opacity-90 transition-all disabled:opacity-50"
+                >
+                  {addLoading ? 'Creating...' : 'Create Account'}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShowAddForm(false)}
+                  className="px-4 py-2.5 border border-white/10 text-zinc-400 text-xs font-semibold tracking-wider uppercase hover:border-white/30 hover:text-white transition-all"
+                >
+                  Cancel
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
 
       {/* Stats */}
       <div className="grid grid-cols-1 sm:grid-cols-4 gap-5">

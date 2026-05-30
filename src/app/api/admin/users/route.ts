@@ -47,6 +47,50 @@ export async function GET() {
   }
 }
 
+export async function POST(request: Request) {
+  try {
+    const caller = await requireAdmin();
+    if (!caller) return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
+
+    const body = await request.json();
+    const { email, password, displayName, role } = body as {
+      email?: string;
+      password?: string;
+      displayName?: string;
+      role?: string;
+    };
+
+    if (!email || !password || !displayName) {
+      return NextResponse.json({ error: 'Email, password and name are required' }, { status: 400 });
+    }
+    if (password.length < 6) {
+      return NextResponse.json({ error: 'Password must be at least 6 characters' }, { status: 400 });
+    }
+    const validRole = ['customer', 'vendor', 'admin'].includes(role ?? '') ? role! : 'customer';
+
+    const userRecord = await authAdmin.createUser({ email, password, displayName });
+
+    await authAdmin.setCustomUserClaims(userRecord.uid, { role: validRole });
+
+    const now = admin.firestore.FieldValue.serverTimestamp();
+    await dbAdmin.collection('users').doc(userRecord.uid).set({
+      uid: userRecord.uid,
+      email,
+      displayName,
+      role: validRole,
+      superAdmin: false,
+      createdAt: now,
+      updatedAt: now,
+    });
+
+    return NextResponse.json({ success: true, uid: userRecord.uid }, { status: 201 });
+  } catch (error: any) {
+    console.error('Admin users POST error:', error);
+    const message = error?.errorInfo?.message || error?.message || 'Failed to create user';
+    return NextResponse.json({ error: message }, { status: 500 });
+  }
+}
+
 export async function PATCH(request: Request) {
   try {
     const caller = await requireAdmin();

@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { formatPrice } from '@/lib/utils';
 import { User, MapPin, ShoppingBag, Sparkles, LogOut, Package, CheckCircle, Truck, Clock } from 'lucide-react';
+import Image from 'next/image';
 
 const MOCK_ORDERS = [
   { id: 'ORD-4821', date: '2026-05-29', total: 574000, items: 2, status: 'processing', products: ['Bespoke Cashmere Trench Coat', 'Saddle Calfskin Duffel Bag'] },
@@ -47,8 +48,8 @@ export default function AccountPage() {
     return (
       <div className="min-h-[60vh] flex items-center justify-center">
         <div className="glass p-10 border border-white/5 text-center max-w-sm space-y-5">
-          <div className="inline-flex p-4 rounded-full bg-primary/10 border border-primary/20 text-primary">
-            <User className="h-8 w-8" />
+          <div className="flex rounded-full bg-primary/10 border border-primary/20 w-25 h-25 text-primary overflow-hidden mx-auto">
+            <img src="/only_logo.webp" alt="GLIMORE LIFE STYLE Logo" width={100} height={100} className="object-cover" />
           </div>
           <div className="space-y-2">
             <h2 className="font-['Cinzel'] text-xl font-bold tracking-widest text-white">SIGN IN REQUIRED</h2>
