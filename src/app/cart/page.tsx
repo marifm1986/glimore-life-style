@@ -274,6 +274,7 @@ export default function CartPage() {
                 <span className="font-['Cinzel'] tracking-wider">Estimated Total</span>
                 <span className="text-primary">{formatPrice(cartTotal + shippingCharge * 100)}</span>
               </div>
+              <span className="text-[10px] text-zinc-500 uppercase font-semibold tracking-wider">CASH ON DELIVERY</span>
             </div>
 
             {/* Error messaging */}
@@ -289,7 +290,7 @@ export default function CartPage() {
               disabled={loading}
               className="w-full py-3.5 bg-primary text-black font-semibold text-xs tracking-[0.2em] uppercase hover:bg-opacity-95 transition-all dark-gold-border rounded-none flex justify-center items-center gap-2"
             >
-              <CreditCard className="h-4 w-4" /> {loading ? 'Fulfilling secure route...' : 'PROCEED TO CHECKOUT'}
+              <CreditCard className="h-4 w-4" /> {loading ? 'Fulfilling secure route...' : 'BUY NOW'}
             </button>
             <span className="text-[9px] text-zinc-500 leading-normal text-center block mt-2">
               Runway garments are fully insured. Secure payouts routed securely via Stripe.

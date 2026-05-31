@@ -203,7 +203,7 @@ export default function HomePage() {
                     </h3>
                   </div>
                   <div className="flex justify-between items-center pt-2 border-t border-white/5">
-                    <span className="text-xs font-semibold text-primary">{formatPrice(item.price)}</span>
+                    <span className="text-xs font-semibold text-primary">{formatPrice(item.price*100)}</span>
                     <span className="text-[10px] text-zinc-500 group-hover:text-white group-hover:underline transition-all tracking-wider uppercase font-medium">
                       View Details
                     </span>

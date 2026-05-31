@@ -3,6 +3,7 @@ import './globals.css';
 import { AuthProvider } from '@/context/AuthContext';
 import { CartProvider } from '@/context/CartContext';
 import PublicShell from '@/components/shared/PublicShell';
+import PwaRegister from '@/components/PwaRegister';
 
 export const metadata: Metadata = {
   title: 'GLIMORE LIFE STYLE | Luxury Haute Couture & Curated Designer Pieces',
@@ -37,6 +38,13 @@ export default function RootLayout({
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         {/* eslint-disable-next-line @next/next/no-page-custom-font */}
         <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet" />
+        <link rel="manifest" href="/manifest.json" />
+        <meta name="theme-color" content="#d4a853" />
+        <meta name="apple-mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+        <meta name="apple-mobile-web-app-title" content="Glimore" />
+        <meta name="mobile-web-app-capable" content="yes" />
+        <link rel="apple-touch-icon" href="/only_logo.webp" />
       </head>
       <body className="min-h-full flex flex-col bg-background text-foreground selection:bg-primary/30 selection:text-white">
         <AuthProvider>
@@ -44,6 +52,7 @@ export default function RootLayout({
             <PublicShell>{children}</PublicShell>
           </CartProvider>
         </AuthProvider>
+        <PwaRegister />
       </body>
     </html>
   );
