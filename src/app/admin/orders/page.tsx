@@ -367,7 +367,9 @@ export default function AdminOrdersPage() {
   }), [orders, search, paymentFilter, shippingFilter]);
 
   const totalRevenue = useMemo(
-    () => orders.filter(o => o.paymentStatus === 'paid').reduce((s, o) => s + o.totalAmount, 0),
+    () => orders
+      .filter(o => o.paymentStatus !== 'failed' && o.paymentStatus !== 'refunded')
+      .reduce((s, o) => s + o.totalAmount, 0),
     [orders]
   );
 

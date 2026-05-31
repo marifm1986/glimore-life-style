@@ -48,15 +48,19 @@ function formatTs(ts: any): string {
   return d.toISOString().split('T')[0];
 }
 
-const MONTH_LABELS = ['Dec', 'Jan', 'Feb', 'Mar', 'Apr', 'May'];
-const MONTH_KEYS: Array<{ year: number; month: number }> = [
-  { year: 2025, month: 11 },
-  { year: 2026, month: 0 },
-  { year: 2026, month: 1 },
-  { year: 2026, month: 2 },
-  { year: 2026, month: 3 },
-  { year: 2026, month: 4 },
-];
+const MONTH_SHORT = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+function getLast6Months(): Array<{ year: number; month: number; label: string }> {
+  const now = new Date();
+  return Array.from({ length: 6 }, (_, i) => {
+    const d = new Date(now.getFullYear(), now.getMonth() - 5 + i, 1);
+    return { year: d.getFullYear(), month: d.getMonth(), label: MONTH_SHORT[d.getMonth()] };
+  });
+}
+
+function isCountableOrder(paymentStatus: string) {
+  return paymentStatus !== 'failed' && paymentStatus !== 'refunded';
+}
 
 export default function AdminAnalyticsPage() {
   const router = useRouter();
@@ -90,29 +94,29 @@ export default function AdminAnalyticsPage() {
   }, [user]);
 
   const monthlyRevenue = useMemo(() => {
-    return MONTH_KEYS.map((mk, idx) => {
+    return getLast6Months().map(mk => {
       const bucket = orders.filter(o => {
-        if (o.paymentStatus !== 'paid') return false;
-        const d = o.createdAt?.toDate ? o.createdAt.toDate() : new Date(o.createdAt);
+        if (!isCountableOrder(o.paymentStatus)) return false;
+        const d: Date = o.createdAt?.toDate ? o.createdAt.toDate() : new Date(o.createdAt);
         return d.getFullYear() === mk.year && d.getMonth() === mk.month;
       });
       return {
-        month: MONTH_LABELS[idx],
-        revenue: bucket.reduce((s, o) => s + o.totalAmount, 0),
+        month: mk.label,
+        revenue: bucket.reduce((s: number, o) => s + o.totalAmount, 0),
         orders: bucket.length,
       };
     });
   }, [orders]);
 
   const kpis = useMemo(() => {
-    const paidOrders = orders.filter(o => o.paymentStatus === 'paid');
-    const totalRevenue = paidOrders.reduce((s, o) => s + o.totalAmount, 0);
+    const validOrders = orders.filter(o => isCountableOrder(o.paymentStatus));
+    const totalRevenue = validOrders.reduce((s: number, o) => s + o.totalAmount, 0);
     const totalOrders = orders.length;
-    const avgOrderValue = totalOrders > 0 ? Math.round(totalRevenue / totalOrders) : 0;
+    const avgOrderValue = validOrders.length > 0 ? Math.round(totalRevenue / validOrders.length) : 0;
     const uniqueCustomers = new Set(orders.map(o => o.customerId)).size;
-    const apr = monthlyRevenue[4]?.revenue ?? 0;
-    const may = monthlyRevenue[5]?.revenue ?? 0;
-    const mom = apr > 0 ? ((may - apr) / apr * 100).toFixed(1) : '0.0';
+    const prev = monthlyRevenue[monthlyRevenue.length - 2]?.revenue ?? 0;
+    const curr = monthlyRevenue[monthlyRevenue.length - 1]?.revenue ?? 0;
+    const mom = prev > 0 ? ((curr - prev) / prev * 100).toFixed(1) : '0.0';
     return { totalRevenue, totalOrders, avgOrderValue, uniqueCustomers, mom };
   }, [orders, monthlyRevenue]);
 
@@ -159,12 +163,12 @@ export default function AdminAnalyticsPage() {
   }, [inventory]);
 
   const maxRevenue = useMemo(
-    () => Math.max(...monthlyRevenue.map(m => m.revenue), 1),
+    () => Math.max(...monthlyRevenue.map((m: { revenue: number }) => m.revenue), 1),
     [monthlyRevenue]
   );
 
   const totalRevenue6m = useMemo(
-    () => monthlyRevenue.reduce((s, m) => s + m.revenue, 0),
+    () => monthlyRevenue.reduce((s: number, m: { revenue: number }) => s + m.revenue, 0),
     [monthlyRevenue]
   );
 
@@ -215,7 +219,7 @@ export default function AdminAnalyticsPage() {
           </div>
 
           <div className="flex items-end gap-3 h-48">
-            {monthlyRevenue.map((m) => {
+            {monthlyRevenue.map((m: { month: string; revenue: number; orders: number }) => {
               const heightPct = (m.revenue / maxRevenue) * 100;
               return (
                 <div key={m.month} className="flex-1 flex flex-col items-center gap-2">
@@ -237,8 +241,10 @@ export default function AdminAnalyticsPage() {
             })}
           </div>
 
-          <div className="flex items-center justify-between text-[10px] text-zinc-600 border-t border-white/5 pt-3">
-            <span>Dec 2025 — May 2026</span>
+          <div className="flex items-center justify-between text-[10px] text-zinc-600 border-t border-white/5 pt-3" suppressHydrationWarning>
+            <span suppressHydrationWarning>
+              {monthlyRevenue[0]?.month} — {monthlyRevenue[monthlyRevenue.length - 1]?.month} {new Date().getFullYear()}
+            </span>
             <span className="text-primary font-semibold">6-Month Window</span>
           </div>
         </div>

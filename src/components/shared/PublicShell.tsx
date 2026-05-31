@@ -3,6 +3,7 @@
 import { usePathname } from 'next/navigation';
 import Navbar from './Navbar';
 import Footer from './Footer';
+import WhatsAppFloat from '@/components/WhatsAppFloat';
 
 export default function PublicShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -15,6 +16,7 @@ export default function PublicShell({ children }: { children: React.ReactNode })
       <Navbar />
       <main className="flex-grow">{children}</main>
       <Footer />
+      <WhatsAppFloat />
     </>
   );
 }
