@@ -191,7 +191,7 @@ export default function ProductDetailPage({ params }: { params: Promise<{ slug: 
               className="grow px-8 py-3 bg-primary text-black font-semibold text-xs tracking-[0.2em] uppercase hover:bg-opacity-95 transition-all dark-gold-border rounded-none flex justify-center items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <ShoppingBag className="h-4 w-4" />
-              {product.status === 'out-of-stock' ? 'Out of Stock' : 'Add to Basket'}
+              {product.status === 'out-of-stock' ? 'Out of Stock' : 'Add to Cart'}
             </button>
 
             <button className="p-3 border border-white/10 hover:border-primary/50 text-zinc-400 hover:text-primary transition-all">

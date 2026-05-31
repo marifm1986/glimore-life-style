@@ -1,26 +1,35 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useCart } from '@/context/CartContext';
 import { useAuth } from '@/context/AuthContext';
 import { formatPrice } from '@/lib/utils';
-import { Trash2, ShoppingBag, CreditCard, Ship, Truck } from 'lucide-react';
+import { Trash2, ShoppingBag, CreditCard, Truck } from 'lucide-react';
 import { shippingAddressSchema } from '@/lib/validations';
+import { doc, onSnapshot } from 'firebase/firestore';
+import { db } from '@/config/firebase';
 
 export default function CartPage() {
   const { cart, updateQuantity, removeFromCart, cartTotal, clearCart } = useCart();
   const { user } = useAuth();
-  
+
+  const [shippingCharge, setShippingCharge] = useState(0);
+
+  useEffect(() => {
+    const unsub = onSnapshot(doc(db, 'settings', 'shipping'), (snap) => {
+      setShippingCharge(snap.exists() ? (snap.data().amount ?? 0) : 0);
+    });
+    return () => unsub();
+  }, []);
+
   const [shippingForm, setShippingForm] = useState({
     customerName: '',
     phone: '',
     line1: user?.shippingAddress?.line1 || '',
     line2: user?.shippingAddress?.line2 || '',
     city: user?.shippingAddress?.city || '',
-    state: user?.shippingAddress?.state || '',
-    postalCode: user?.shippingAddress?.postalCode || '',
-    country: user?.shippingAddress?.country || 'United States',
+    country: user?.shippingAddress?.country || 'Bangladesh',
   });
 
   const [loading, setLoading] = useState(false);
@@ -46,11 +55,13 @@ export default function CartPage() {
       return;
     }
 
+    const orderTotal = cartTotal + shippingCharge * 100;
+    const shippingLabel = shippingCharge === 0 ? 'Complimentary' : formatPrice(shippingCharge * 100);
     const whatsappMessage = `New order from Glimore Life Style:\n\nCustomer: ${result.data.customerName}\nPhone: ${result.data.phone}\nEmail: ${user?.email || 'guest@glimore.style'}\n\nShipping Address:\n${result.data.line1}${result.data.line2 ? `, ${result.data.line2}` : ''}, ${result.data.city}, ${result.data.state}, ${result.data.postalCode}, ${result.data.country}\n\nOrder items:\n${cart
       .map(
         (item) => `${item.title} x${item.quantity} - ${formatPrice(item.price * item.quantity)}`
       )
-      .join('\n')}\n\nSubtotal: ${formatPrice(cartTotal)}\nShipping: Complimentary\nEstimated Total: ${formatPrice(cartTotal)}`;
+      .join('\n')}\n\nSubtotal: ${formatPrice(cartTotal)}\nShipping: ${shippingLabel}\nEstimated Total: ${formatPrice(orderTotal)}`;
 
     const whatsappUrl = `https://wa.me/8801962059698?text=${encodeURIComponent(whatsappMessage)}`;
     window.open(whatsappUrl, '_blank');
@@ -219,32 +230,13 @@ export default function CartPage() {
                   onChange={handleInputChange}
                   className="w-full bg-black border border-white/10 px-3 py-2 text-xs focus:outline-none focus:border-primary text-white"
                 />
+            
                 <div className="grid grid-cols-2 gap-3">
-                  <input 
+                   <input 
                     type="text" 
                     name="city"
                     placeholder="City"
                     value={shippingForm.city}
-                    onChange={handleInputChange}
-                    className="w-full bg-black border border-white/10 px-3 py-2 text-xs focus:outline-none focus:border-primary text-white"
-                    required
-                  />
-                  <input 
-                    type="text" 
-                    name="state"
-                    placeholder="State"
-                    value={shippingForm.state}
-                    onChange={handleInputChange}
-                    className="w-full bg-black border border-white/10 px-3 py-2 text-xs focus:outline-none focus:border-primary text-white"
-                    required
-                  />
-                </div>
-                <div className="grid grid-cols-2 gap-3">
-                  <input 
-                    type="text" 
-                    name="postalCode"
-                    placeholder="Postal Code"
-                    value={shippingForm.postalCode}
                     onChange={handleInputChange}
                     className="w-full bg-black border border-white/10 px-3 py-2 text-xs focus:outline-none focus:border-primary text-white"
                     required
@@ -271,13 +263,16 @@ export default function CartPage() {
                 <span>{formatPrice(cartTotal)}</span>
               </div>
               <div className="flex justify-between text-zinc-400">
-                <span className="flex items-center gap-1"><Truck className="h-3.5 w-3.5" /> Shipping</span>
-                <span className="text-green-400 uppercase font-semibold text-[10px]">Complimentary</span>
+                <span className="flex items-center gap-1"><Truck className="h-3.5 w-3.5" />Shipping Charge</span>
+                {shippingCharge === 0
+                  ? <span className="text-green-400 uppercase font-semibold text-[10px]">Complimentary</span>
+                  : <span className="text-white font-semibold">{formatPrice(shippingCharge * 100)}</span>
+                }
               </div>
               <div className="h-[1px] w-full bg-white/5" />
               <div className="flex justify-between text-white font-semibold text-sm pt-1">
                 <span className="font-['Cinzel'] tracking-wider">Estimated Total</span>
-                <span className="text-primary">{formatPrice(cartTotal)}</span>
+                <span className="text-primary">{formatPrice(cartTotal + shippingCharge * 100)}</span>
               </div>
             </div>
 

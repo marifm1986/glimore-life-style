@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { formatPrice } from '@/lib/utils';
-import { User, MapPin, ShoppingBag, Sparkles, LogOut, Package, CheckCircle, Truck, Clock } from 'lucide-react';
+import { User, MapPin, ShoppingBag, Sparkles, LogOut, Package, CheckCircle, Truck, Clock, Pencil, Check, X } from 'lucide-react';
 import Image from 'next/image';
 
 const MOCK_ORDERS = [
@@ -27,9 +27,30 @@ function statusBadge(status: string) {
 }
 
 export default function AccountPage() {
-  const { user, logout, loading } = useAuth();
+  const { user, logout, loading, updateName } = useAuth();
   const router = useRouter();
   const [activeTab, setActiveTab] = useState<'profile' | 'orders'>('profile');
+  const [editingName, setEditingName] = useState(false);
+  const [nameInput, setNameInput] = useState('');
+  const [nameSaving, setNameSaving] = useState(false);
+  const [nameError, setNameError] = useState<string | null>(null);
+
+  const handleSaveName = async () => {
+    if (!nameInput.trim() || nameInput.trim().length < 2) {
+      setNameError('Name must be at least 2 characters');
+      return;
+    }
+    setNameSaving(true);
+    setNameError(null);
+    try {
+      await updateName(nameInput.trim());
+      setEditingName(false);
+    } catch (err: any) {
+      setNameError(err.message || 'Failed to update name');
+    } finally {
+      setNameSaving(false);
+    }
+  };
 
   const handleLogout = async () => {
     await logout();
@@ -138,8 +159,44 @@ export default function AccountPage() {
               <h3 className="font-['Cinzel'] text-sm font-semibold tracking-wider text-white">Personal Details</h3>
             </div>
             <div className="space-y-4 text-xs">
+              {/* Full Name — editable */}
+              <div className="flex flex-col gap-0.5">
+                <span className="text-[9px] text-zinc-600 uppercase tracking-widest font-semibold">Full Name</span>
+                {editingName ? (
+                  <div className="space-y-2">
+                    <div className="flex gap-2">
+                      <input
+                        type="text"
+                        value={nameInput}
+                        onChange={(e) => setNameInput(e.target.value)}
+                        onKeyDown={(e) => { if (e.key === 'Enter') handleSaveName(); if (e.key === 'Escape') setEditingName(false); }}
+                        autoFocus
+                        className="flex-1 bg-black border border-primary/40 px-2.5 py-1.5 text-xs focus:outline-none focus:border-primary text-white"
+                      />
+                      <button onClick={handleSaveName} disabled={nameSaving} className="p-1.5 bg-primary text-black hover:bg-opacity-90 disabled:opacity-50">
+                        <Check className="h-3.5 w-3.5" />
+                      </button>
+                      <button onClick={() => { setEditingName(false); setNameError(null); }} className="p-1.5 border border-white/10 text-zinc-500 hover:text-white">
+                        <X className="h-3.5 w-3.5" />
+                      </button>
+                    </div>
+                    {nameError && <p className="text-[10px] text-red-400">⚠ {nameError}</p>}
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-2 group">
+                    <span className="text-zinc-300 font-medium">{user.displayName || '—'}</span>
+                    <button
+                      onClick={() => { setNameInput(user.displayName || ''); setEditingName(true); setNameError(null); }}
+                      className="opacity-0 group-hover:opacity-100 transition-opacity p-1 text-zinc-600 hover:text-primary"
+                      title="Edit name"
+                    >
+                      <Pencil className="h-3 w-3" />
+                    </button>
+                  </div>
+                )}
+              </div>
+
               {[
-                { label: 'Full Name', value: user.displayName },
                 { label: 'Email Address', value: user.email },
                 { label: 'Account Role', value: user.role.charAt(0).toUpperCase() + user.role.slice(1) },
                 { label: 'Account ID', value: user.uid.slice(0, 16) + '...' },
