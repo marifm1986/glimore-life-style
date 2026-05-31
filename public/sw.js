@@ -1,6 +1,6 @@
 // ── Push Notifications ────────────────────────────────────────────────────────
 self.addEventListener('push', (event) => {
-  let data = { title: 'New Order', body: 'A new order has been placed.', url: '/admin/orders', tag: 'new-order', icon: '/only_logo.webp' };
+  let data = { title: '🛒 New Order', body: 'A new order has been placed.', url: '/admin/orders', tag: 'new-order', icon: '/only_logo.webp' };
   try { if (event.data) data = { ...data, ...event.data.json() }; } catch {}
   event.waitUntil(
     self.registration.showNotification(data.title, {
@@ -9,8 +9,10 @@ self.addEventListener('push', (event) => {
       badge: '/only_logo.webp',
       tag: data.tag,
       renotify: true,
+      silent: false,
+      vibrate: [300, 100, 300, 100, 300],
       data: { url: data.url },
-      vibrate: [200, 100, 200],
+      actions: [{ action: 'view', title: 'View Order' }],
     })
   );
 });
@@ -21,7 +23,7 @@ self.addEventListener('notificationclick', (event) => {
   event.waitUntil(
     clients.matchAll({ type: 'window', includeUncontrolled: true }).then((list) => {
       for (const client of list) {
-        if (client.url.includes('/admin') && 'focus' in client) {
+        if ('focus' in client) {
           client.navigate(url);
           return client.focus();
         }
@@ -32,9 +34,9 @@ self.addEventListener('notificationclick', (event) => {
 });
 
 // ── Caching ───────────────────────────────────────────────────────────────────
-const SHELL_CACHE = 'glimore-shell-v2';
-const ASSET_CACHE = 'glimore-assets-v2';
-const IMAGE_CACHE = 'glimore-images-v2';
+const SHELL_CACHE = 'glimore-shell-v3';
+const ASSET_CACHE = 'glimore-assets-v3';
+const IMAGE_CACHE = 'glimore-images-v3';
 
 const SKIP_PATTERNS = [
   /firestore\.googleapis\.com/,

@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
-import { Bell, BellOff, Sparkles, Crown, Menu } from 'lucide-react';
+import { Bell, BellOff, Sparkles, Crown, Menu, Send } from 'lucide-react';
 
 interface AdminHeaderProps {
   onMenuClick: () => void;
@@ -24,6 +24,8 @@ export default function AdminHeader({ onMenuClick }: AdminHeaderProps) {
   const [permission, setPermission] = useState<NotificationPermission>('default');
   const [subscribed, setSubscribed] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [testLoading, setTestLoading] = useState(false);
+  const [testResult, setTestResult] = useState<'ok' | 'err' | null>(null);
 
   // Detect current subscription state on mount
   useEffect(() => {
@@ -67,6 +69,10 @@ export default function AdminHeader({ onMenuClick }: AdminHeaderProps) {
       const vapidKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
       if (!vapidKey) { console.warn('[push] NEXT_PUBLIC_VAPID_PUBLIC_KEY not set'); return; }
 
+      // Unsubscribe any stale subscription before creating a fresh one
+      const existing = await reg.pushManager.getSubscription();
+      if (existing) await existing.unsubscribe();
+
       const sub = await reg.pushManager.subscribe({
         userVisibleOnly: true,
         applicationServerKey: urlBase64ToUint8Array(vapidKey),
@@ -80,12 +86,16 @@ export default function AdminHeader({ onMenuClick }: AdminHeaderProps) {
 
       if (res.ok) {
         setSubscribed(true);
-        // Confirm with a test notification
-        reg.showNotification('Notifications enabled', {
-          body: 'You will be notified when new orders arrive.',
+        reg.showNotification('✅ Subscribed on this device', {
+          body: 'You will receive order notifications here.',
           icon: '/only_logo.webp',
           tag: 'setup',
-        });
+          silent: false,
+          vibrate: [200, 100, 200],
+        } as NotificationOptions);
+      } else {
+        console.error('[push] Failed to save subscription — status', res.status);
+        await sub.unsubscribe();
       }
     } catch (err) {
       console.error('[push] subscribe error:', err);
@@ -94,11 +104,26 @@ export default function AdminHeader({ onMenuClick }: AdminHeaderProps) {
     }
   };
 
+  const handleTest = async () => {
+    if (testLoading) return;
+    setTestLoading(true);
+    setTestResult(null);
+    try {
+      const res = await fetch('/api/push/test', { method: 'POST' });
+      setTestResult(res.ok ? 'ok' : 'err');
+    } catch {
+      setTestResult('err');
+    } finally {
+      setTestLoading(false);
+      setTimeout(() => setTestResult(null), 4000);
+    }
+  };
+
   const bellTitle = subscribed
-    ? 'Notifications on — click to disable'
+    ? 'Notifications ON — click to disable'
     : permission === 'denied'
     ? 'Notifications blocked in browser settings'
-    : 'Enable order notifications';
+    : 'Enable order notifications on this device';
 
   const BellIcon = subscribed ? Bell : BellOff;
   const bellColor = subscribed
@@ -119,7 +144,7 @@ export default function AdminHeader({ onMenuClick }: AdminHeaderProps) {
         </button>
         <div className="hidden sm:flex items-center gap-2">
           <Sparkles className="h-3.5 w-3.5 text-primary" />
-          <span className="text-[10px] tracking-[0.3em] uppercase text-primary font-semibold">
+          <span className="text-[10px] tracking-[0.3em] uppercase text-primary font-semibold" suppressHydrationWarning>
             {new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}
           </span>
         </div>
@@ -129,6 +154,27 @@ export default function AdminHeader({ onMenuClick }: AdminHeaderProps) {
       </div>
 
       <div className="flex items-center gap-4">
+
+        {/* Test push button — only shown when subscribed */}
+        {subscribed && (
+          <button
+            onClick={handleTest}
+            disabled={testLoading}
+            title="Send a test notification to all subscribed devices"
+            aria-label="Send test notification"
+            className={`text-[9px] font-semibold uppercase tracking-widest px-2 py-1 border transition-all ${
+              testResult === 'ok'
+                ? 'border-green-500/40 text-green-400'
+                : testResult === 'err'
+                ? 'border-red-500/40 text-red-400'
+                : 'border-white/10 text-zinc-500 hover:border-primary/40 hover:text-primary'
+            } ${testLoading ? 'opacity-50 cursor-wait' : ''}`}
+          >
+            {testLoading ? '...' : testResult === 'ok' ? '✓ Sent' : testResult === 'err' ? '✗ Failed' : <span className="flex items-center gap-1"><Send size={9} />Test</span>}
+          </button>
+        )}
+
+        {/* Bell subscribe button */}
         <button
           onClick={permission !== 'denied' ? handleBell : undefined}
           disabled={loading || permission === 'denied'}
