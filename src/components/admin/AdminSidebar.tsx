@@ -53,7 +53,7 @@ export default function AdminSidebar({ isOpen, onClose }: AdminSidebarProps) {
       <div className="h-16 lg:h-28 px-6 flex flex-col justify-center lg:justify-end lg:pb-4 border-b border-white/5 shrink-0">
         <div className="flex items-center justify-between">
           <div>
-            <span className="font-['Cinzel'] text-xl font-bold tracking-[0.2em] gold-text">
+            <span className="font-['Montserrat'] text-xl font-bold tracking-[0.2em] gold-text">
               GLIMORE
             </span>
             <span className="text-[9px] tracking-[0.4em] uppercase text-primary/60 font-semibold mt-0.5 block">

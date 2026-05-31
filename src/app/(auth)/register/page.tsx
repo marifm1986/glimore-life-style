@@ -44,7 +44,7 @@ export default function RegisterPage() {
         />
         <div className="relative z-10 flex flex-col justify-end h-full p-8 text-left space-y-4">
           <span className="text-[10px] tracking-[0.3em] text-primary uppercase font-bold">Designer Syndicate</span>
-          <h2 className="font-['Cinzel'] text-3xl font-semibold text-white tracking-widest leading-tight">
+          <h2 className="font-['Montserrat'] text-3xl font-semibold text-white tracking-widest leading-tight">
             BECOME PART OF THE COLLECTIVE
           </h2>
           <p className="text-zinc-300 text-xs tracking-wider font-light leading-relaxed max-w-md">
@@ -61,7 +61,7 @@ export default function RegisterPage() {
           <span className="text-[10px] tracking-[0.3em] uppercase text-primary font-semibold flex items-center gap-1">
             <Sparkles className="h-3.5 w-3.5" /> Luxury Collective
           </span>
-          <h1 className="font-['Cinzel'] text-3xl font-bold tracking-widest text-white">
+          <h1 className="font-['Montserrat'] text-3xl font-bold tracking-widest text-white">
             REGISTER
           </h1>
         </div>

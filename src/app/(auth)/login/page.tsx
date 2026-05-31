@@ -40,7 +40,7 @@ export default function LoginPage() {
         />
         <div className="relative z-10 flex flex-col justify-end h-full p-8 text-left space-y-4">
           <span className="text-[10px] tracking-[0.3em] text-primary uppercase font-bold">Uncompromising Quality</span>
-          <h2 className="font-['Cinzel'] text-3xl font-semibold text-white tracking-widest leading-tight">
+          <h2 className="font-['Montserrat'] text-3xl font-semibold text-white tracking-widest leading-tight">
             ESTABLISH YOUR GLIMORE PORTAL
           </h2>
           <p className="text-zinc-300 text-xs tracking-wider font-light leading-relaxed max-w-md">
@@ -56,7 +56,7 @@ export default function LoginPage() {
           <span className="text-[10px] tracking-[0.3em] uppercase text-primary font-semibold flex items-center gap-1">
             <Sparkles className="h-3.5 w-3.5" aria-hidden="true" /> Luxury Collective
           </span>
-          <h1 className="font-['Cinzel'] text-3xl font-bold tracking-widest text-white">
+          <h1 className="font-['Montserrat'] text-3xl font-bold tracking-widest text-white">
             SIGN IN
           </h1>
         </div>

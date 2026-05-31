@@ -260,7 +260,7 @@ export default function VendorDashboard() {
           <span className="text-[10px] tracking-[0.3em] uppercase text-primary font-semibold flex items-center gap-1">
             <Sparkles className="h-3.5 w-3.5" /> Vendor Hub
           </span>
-          <h1 className="font-['Cinzel'] text-3xl font-bold tracking-widest text-white">{user.displayName || 'My Store'}</h1>
+          <h1 className="font-['Montserrat'] text-3xl font-bold tracking-widest text-white">{user.displayName || 'My Store'}</h1>
         </div>
         <button onClick={openCreate} className="px-6 py-3 bg-primary text-black font-semibold text-xs tracking-[0.15em] uppercase flex items-center gap-2 hover:bg-opacity-95 transition-all shrink-0">
           <Plus className="h-4 w-4" /> Add Product
@@ -369,7 +369,7 @@ export default function VendorDashboard() {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
           <div className="glass border border-white/10 max-w-lg w-full max-h-[90vh] overflow-y-auto p-6 space-y-5 animate-fadeIn">
             <div className="flex justify-between items-center border-b border-white/5 pb-4">
-              <h3 className="font-['Cinzel'] text-sm font-semibold tracking-wider text-white">
+              <h3 className="font-['Montserrat'] text-sm font-semibold tracking-wider text-white">
                 {modalMode === 'create' ? 'Add Product' : 'Edit Product'}
               </h3>
               <button onClick={() => setModalOpen(false)} disabled={isSaving} className="text-zinc-500 hover:text-white">
@@ -505,7 +505,7 @@ export default function VendorDashboard() {
       {deleteId && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
           <div className="glass border border-white/10 max-w-sm w-full p-6 space-y-5 animate-fadeIn">
-            <h3 className="font-['Cinzel'] text-sm font-semibold tracking-wider text-white">Remove Product?</h3>
+            <h3 className="font-['Montserrat'] text-sm font-semibold tracking-wider text-white">Remove Product?</h3>
             <p className="text-zinc-400 text-xs leading-relaxed">
               Remove <strong className="text-white">{products.find(p => p.id === deleteId)?.productName}</strong> from the store? This cannot be undone.
             </p>

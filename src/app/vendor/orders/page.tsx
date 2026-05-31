@@ -142,7 +142,7 @@ export default function VendorOrdersPage() {
           <span className="text-[10px] tracking-[0.3em] uppercase text-primary font-semibold flex items-center gap-1 mb-1">
             <ShoppingCart className="h-3.5 w-3.5" /> Fulfillment Centre
           </span>
-          <h1 className="font-['Cinzel'] text-2xl font-bold tracking-widest text-white">MY ORDERS</h1>
+          <h1 className="font-['Montserrat'] text-2xl font-bold tracking-widest text-white">MY ORDERS</h1>
           <p className="text-zinc-500 text-xs mt-1 font-light">Track and fulfill orders for {user.displayName}.</p>
         </div>
       </div>

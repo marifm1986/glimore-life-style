@@ -19,7 +19,7 @@ function OrderSuccessContent() {
 
       <div className="space-y-3">
         <span className="text-[10px] tracking-[0.3em] uppercase text-primary font-semibold">Payment Confirmed</span>
-        <h1 className="font-['Cinzel'] text-3xl sm:text-4xl font-bold tracking-widest text-white leading-tight">
+        <h1 className="font-['Montserrat'] text-3xl sm:text-4xl font-bold tracking-widest text-white leading-tight">
           ORDER ACQUIRED
         </h1>
         <p className="text-zinc-500 text-xs tracking-wider max-w-md mx-auto font-light leading-relaxed">

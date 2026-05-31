@@ -82,7 +82,7 @@ function CollectionPageContent() {
         <span className="text-[10px] tracking-[0.3em] uppercase text-primary font-semibold flex items-center justify-center gap-1">
           <Sparkles className="h-3 w-3" /> Clothing &bull; Shoes &bull; Hoodies
         </span>
-        <h1 className="font-['Cinzel'] text-4xl sm:text-5xl font-bold tracking-widest text-white">THE UNIQUE COLLECTION</h1>
+        <h1 className="font-['Montserrat'] text-4xl sm:text-5xl font-bold tracking-widest text-white">THE UNIQUE COLLECTION</h1>
         <p className="text-zinc-500 text-xs sm:text-sm tracking-wider max-w-xl mx-auto font-light">
           Explore our full range of premium clothing, footwear, and hoodies — crafted for style, comfort, and everyday wear.
         </p>
@@ -93,7 +93,7 @@ function CollectionPageContent() {
         {/* Filter Sidebar */}
         <aside className="w-full lg:w-64 space-y-8 glass p-6 border border-white/5 h-fit">
           <div className="flex items-center justify-between pb-4 border-b border-white/5">
-            <h3 className="font-['Cinzel'] text-sm font-semibold tracking-wider text-white flex items-center gap-2">
+            <h3 className="font-['Montserrat'] text-sm font-semibold tracking-wider text-white flex items-center gap-2">
               <SlidersHorizontal className="h-4 w-4 text-primary" /> Filter Options
             </h3>
           </div>
@@ -235,7 +235,7 @@ function CollectionPageContent() {
                   <div className="p-5 flex-grow flex flex-col justify-between space-y-3 bg-[#0a0a0d]">
                     <div className="space-y-1">
                       <span className="text-[9px] tracking-wider text-zinc-500 uppercase">{item.collection}</span>
-                      <h3 className="font-['Cinzel'] text-sm font-semibold text-white group-hover:text-primary transition-colors tracking-wide leading-tight line-clamp-1">
+                      <h3 className="font-['Montserrat'] text-sm font-semibold text-white group-hover:text-primary transition-colors tracking-wide leading-tight line-clamp-1">
                         {item.productName}
                       </h3>
                       <p className="text-[10px] text-zinc-600 uppercase tracking-wider">{item.material} · {item.gemstone}</p>

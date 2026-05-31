@@ -1,13 +1,20 @@
-'use client';
+"use client";
 
-import { useEffect, useRef, useState } from 'react';
-import Link from 'next/link';
-import { ShoppingBag, Compass, ShieldCheck, ChevronLeft, ChevronRight } from 'lucide-react';
-import { formatPrice } from '@/lib/utils';
-import { collection, onSnapshot, query, where } from 'firebase/firestore';
-import { db } from '@/config/firebase';
+import { useEffect, useRef, useState } from "react";
+import Link from "next/link";
+import {
+  ShoppingBag,
+  Compass,
+  ShieldCheck,
+  ChevronLeft,
+  ChevronRight,
+} from "lucide-react";
+import { formatPrice } from "@/lib/utils";
+import { collection, onSnapshot, query, where } from "firebase/firestore";
+import { db } from "@/config/firebase";
 
-const FALLBACK_IMAGE = 'https://images.unsplash.com/photo-1490481651871-ab68de25d43d?q=80&w=1600&auto=format&fit=crop';
+const FALLBACK_IMAGE =
+  "https://images.unsplash.com/photo-1490481651871-ab68de25d43d?q=80&w=1600&auto=format&fit=crop";
 
 interface FeaturedProduct {
   id: string;
@@ -25,9 +32,14 @@ export default function HomePage() {
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   useEffect(() => {
-    const q = query(collection(db, 'inventory'), where('isFeatured', '==', true));
+    const q = query(
+      collection(db, "inventory"),
+      where("isFeatured", "==", true),
+    );
     const unsub = onSnapshot(q, (snap) => {
-      setFeatured(snap.docs.map(d => ({ id: d.id, ...d.data() } as FeaturedProduct)));
+      setFeatured(
+        snap.docs.map((d) => ({ id: d.id, ...d.data() }) as FeaturedProduct),
+      );
       setFeaturedLoading(false);
     });
     return () => unsub();
@@ -36,7 +48,7 @@ export default function HomePage() {
   useEffect(() => {
     if (featured.length < 2) return;
     intervalRef.current = setInterval(() => {
-      setCurrentSlide(prev => (prev + 1) % featured.length);
+      setCurrentSlide((prev) => (prev + 1) % featured.length);
     }, 5000);
     return () => {
       if (intervalRef.current) clearInterval(intervalRef.current);
@@ -48,7 +60,7 @@ export default function HomePage() {
     setCurrentSlide(idx);
     if (featured.length > 1) {
       intervalRef.current = setInterval(() => {
-        setCurrentSlide(prev => (prev + 1) % featured.length);
+        setCurrentSlide((prev) => (prev + 1) % featured.length);
       }, 5000);
     }
   };
@@ -58,10 +70,8 @@ export default function HomePage() {
 
   return (
     <div className="w-full relative bg-background pb-20">
-
       {/* HERO */}
-      <section className="relative h-[90vh] flex items-center justify-center overflow-hidden border-b border-white/5">
-
+      <section className="relative h-[60vh] flex items-center justify-center overflow-hidden border-b border-white/5">
         {/* Slideshow backgrounds */}
         {hasSlides ? (
           featured.map((item, i) => (
@@ -71,7 +81,7 @@ export default function HomePage() {
               src={item.image}
               alt=""
               aria-hidden="true"
-              className={`absolute inset-0 w-full h-full object-cover object-center brightness-[0.35] transition-opacity duration-1000 ${i === currentSlide ? 'opacity-100' : 'opacity-0'}`}
+              className={`absolute inset-0 w-full h-full object-cover object-center brightness-[0.35] transition-opacity duration-1000 ${i === currentSlide ? "opacity-100" : "opacity-0"}`}
             />
           ))
         ) : (
@@ -85,12 +95,12 @@ export default function HomePage() {
 
         {/* Hero text */}
         <div className="relative z-10 text-center max-w-4xl px-6 space-y-8 animate-fadeIn">
-          <h1 className="font-['Cinzel'] text-4xl sm:text-6xl md:text-7xl font-bold tracking-[0.15em] text-white leading-tight">
+          <h1 className="font-['Montserrat'] text-4xl sm:text-6xl md:text-7xl font-bold tracking-[0.15em] text-white leading-tight">
             PREMIUM <br />
             <span className="gold-text">COLLECTION</span>
           </h1>
           <p className="text-zinc-300 max-w-xl mx-auto text-sm sm:text-base leading-relaxed tracking-wider font-light">
-            You can explore the entire collection of GLIMORE LIFE STYLE, featuring exclusive pieces from top-tier independent designers around the world. Each item is handpicked for its exceptional quality and unique style, ensuring you find something truly special.
+            Timeless fashion and accessories crafted to complement your unique style.
           </p>
           <div className="flex flex-wrap justify-center gap-4 pt-4">
             <Link
@@ -106,11 +116,15 @@ export default function HomePage() {
         {currentItem && (
           <div className="absolute bottom-12 left-8 z-10 max-w-xs">
             <Link href={`/products/${currentItem.id}`} className="group block">
-              <span className="text-[9px] tracking-widest uppercase text-primary font-semibold">{currentItem.category}</span>
-              <p className="font-['Cinzel'] text-white text-sm font-semibold tracking-wide leading-tight group-hover:text-primary transition-colors line-clamp-1 mt-0.5">
+              <span className="text-[9px] tracking-widest uppercase text-primary font-semibold">
+                {currentItem.category}
+              </span>
+              <p className="font-['Montserrat'] text-white text-sm font-semibold tracking-wide leading-tight group-hover:text-primary transition-colors line-clamp-1 mt-0.5">
                 {currentItem.productName}
               </p>
-              <p className="text-primary text-xs font-semibold mt-1">{formatPrice(currentItem.price)}</p>
+              {/* <p className="text-primary text-xs font-semibold mt-1">
+                {formatPrice(currentItem.price)}
+              </p> */}
             </Link>
           </div>
         )}
@@ -119,7 +133,9 @@ export default function HomePage() {
         {hasSlides && featured.length > 1 && (
           <>
             <button
-              onClick={() => goTo((currentSlide - 1 + featured.length) % featured.length)}
+              onClick={() =>
+                goTo((currentSlide - 1 + featured.length) % featured.length)
+              }
               className="absolute left-4 top-1/2 -translate-y-1/2 z-10 p-2 bg-black/40 border border-white/10 text-white hover:border-primary hover:text-primary transition-all backdrop-blur-sm"
               aria-label="Previous slide"
             >
@@ -142,7 +158,7 @@ export default function HomePage() {
               <button
                 key={i}
                 onClick={() => goTo(i)}
-                className={`h-1.5 transition-all duration-300 ${i === currentSlide ? 'w-6 bg-primary' : 'w-1.5 bg-white/30 hover:bg-white/60'}`}
+                className={`h-1.5 transition-all duration-300 ${i === currentSlide ? "w-6 bg-primary" : "w-1.5 bg-white/30 hover:bg-white/60"}`}
                 aria-label={`Go to slide ${i + 1}`}
               />
             ))}
@@ -153,15 +169,22 @@ export default function HomePage() {
       {/* FEATURED COLLECTION */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
         <div className="text-center space-y-4 mb-16">
-          <span className="text-[10px] tracking-[0.3em] uppercase text-primary font-semibold">Exquisite Additions</span>
-          <h2 className="font-['Cinzel'] text-3xl sm:text-4xl font-bold tracking-widest text-white">THE RUNWAY PIECES</h2>
+          <span className="text-[10px] tracking-[0.3em] uppercase text-primary font-semibold">
+            Exquisite Additions
+          </span>
+          <h2 className="font-['Montserrat'] text-3xl sm:text-4xl font-bold tracking-widest text-white">
+            THE RUNWAY PIECES
+          </h2>
           <div className="h-px w-24 bg-primary mx-auto opacity-40 mt-4" />
         </div>
 
         {featuredLoading ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
             {[...Array(4)].map((_, i) => (
-              <div key={i} className="glass border border-white/5 animate-pulse">
+              <div
+                key={i}
+                className="glass border border-white/5 animate-pulse"
+              >
                 <div className="aspect-[3/4] bg-white/5" />
                 <div className="p-5 space-y-2">
                   <div className="h-2 bg-white/5 rounded w-1/2" />
@@ -172,7 +195,10 @@ export default function HomePage() {
           </div>
         ) : featured.length === 0 ? (
           <div className="glass p-12 text-center border border-white/5">
-            <p className="text-zinc-500 text-xs font-light">No featured products yet. Mark items as featured in the admin panel.</p>
+            <p className="text-zinc-500 text-xs font-light">
+              No featured products yet. Mark items as featured in the admin
+              panel.
+            </p>
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
@@ -197,13 +223,17 @@ export default function HomePage() {
 
                 <div className="p-5 grow flex flex-col justify-between space-y-3 bg-[#0a0a0d]">
                   <div className="space-y-1">
-                    <span className="text-[9px] tracking-wider text-zinc-500 uppercase">{item.collection}</span>
-                    <h3 className="font-['Cinzel'] text-sm font-semibold text-white group-hover:text-primary transition-colors tracking-wide leading-tight line-clamp-1">
+                    <span className="text-[9px] tracking-wider text-zinc-500 uppercase">
+                      {item.collection}
+                    </span>
+                    <h3 className="font-['Montserrat'] text-sm font-semibold text-white group-hover:text-primary transition-colors tracking-wide leading-tight line-clamp-1">
                       {item.productName}
                     </h3>
                   </div>
                   <div className="flex justify-between items-center pt-2 border-t border-white/5">
-                    <span className="text-xs font-semibold text-primary">{formatPrice(item.price*100)}</span>
+                    <span className="text-xs font-semibold text-primary">
+                      {formatPrice(item.price * 100)}
+                    </span>
                     <span className="text-[10px] text-zinc-500 group-hover:text-white group-hover:underline transition-all tracking-wider uppercase font-medium">
                       View Details
                     </span>
@@ -226,24 +256,18 @@ export default function HomePage() {
 
       {/* VALUE PROPOSITIONS */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
-          <div className="glass p-8 text-center border border-white/5 flex flex-col items-center space-y-4">
-            <div className="p-3.5 rounded-full bg-primary/10 border border-primary/20 text-primary">
-              <Compass className="h-6 w-6" />
-            </div>
-            <h3 className="font-['Cinzel'] text-lg font-semibold tracking-wider text-white">Avant-Garde Curation</h3>
-            <p className="text-zinc-500 text-xs leading-relaxed font-light">
-              We exclusively partner with highly acclaimed independent fashion houses, selecting only a limited number of items to assure unparalleled uniqueness.
-            </p>
-          </div>
-
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
           <div className="glass p-8 text-center border border-white/5 flex flex-col items-center space-y-4">
             <div className="p-3.5 rounded-full bg-primary/10 border border-primary/20 text-primary">
               <ShieldCheck className="h-6 w-6" />
             </div>
-            <h3 className="font-['Cinzel'] text-lg font-semibold tracking-wider text-white">Verified Authenticity</h3>
+            <h3 className="font-['Montserrat'] text-lg font-semibold tracking-wider text-white">
+              Verified Authenticity
+            </h3>
             <p className="text-zinc-500 text-xs leading-relaxed font-light">
-              Every single product in our boutique undergoes rigorous verification by industry specialists to promise genuine designer craftsmanship.
+              Every single product in our boutique undergoes rigorous
+              verification by industry specialists to promise genuine designer
+              craftsmanship.
             </p>
           </div>
 
@@ -251,14 +275,17 @@ export default function HomePage() {
             <div className="p-3.5 rounded-full bg-primary/10 border border-primary/20 text-primary">
               <ShoppingBag className="h-6 w-6" />
             </div>
-            <h3 className="font-['Cinzel'] text-lg font-semibold tracking-wider text-white">Split Vendor Checkout</h3>
+            <h3 className="font-['Montserrat'] text-lg font-semibold tracking-wider text-white">
+              Split Vendor Checkout
+            </h3>
             <p className="text-zinc-500 text-xs leading-relaxed font-light">
-              Buy from multiple global brands in a single purchase. Our Stripe Connect architecture splits payouts and coordinates fulfillment securely.
+              Buy from multiple global brands in a single purchase. Our Stripe
+              Connect architecture splits payouts and coordinates fulfillment
+              securely.
             </p>
           </div>
         </div>
       </section>
-
     </div>
   );
 }
