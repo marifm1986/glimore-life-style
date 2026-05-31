@@ -73,7 +73,7 @@ export default function AccountPage() {
             <img src="/only_logo.webp" alt="GLIMORE LIFE STYLE Logo" width={100} height={100} className="object-cover" />
           </div>
           <div className="space-y-2">
-            <h2 className="font-['Cinzel'] text-xl font-bold tracking-widest text-white">SIGN IN REQUIRED</h2>
+            <h2 className="font-['Montserrat'] text-xl font-bold tracking-widest text-white">SIGN IN REQUIRED</h2>
             <p className="text-zinc-500 text-xs font-light leading-relaxed">Access your Glimore account to view your profile, orders, and preferences.</p>
           </div>
           <Link href="/login" className="block px-6 py-3 bg-primary text-black font-semibold text-xs tracking-[0.2em] uppercase hover:bg-opacity-90 transition-all">
@@ -93,7 +93,7 @@ export default function AccountPage() {
           <span className="text-[10px] tracking-[0.3em] uppercase text-primary font-semibold flex items-center gap-1 mb-1">
             <Sparkles className="h-3.5 w-3.5" /> Glimore Member Portal
           </span>
-          <h1 className="font-['Cinzel'] text-2xl font-bold tracking-widest text-white">
+          <h1 className="font-['Montserrat'] text-2xl font-bold tracking-widest text-white">
             {user.displayName?.toUpperCase() || 'MY ACCOUNT'}
           </h1>
           <p className="text-zinc-500 text-xs mt-1">{user.email}</p>
@@ -156,7 +156,7 @@ export default function AccountPage() {
           <div className="glass p-6 border border-white/5 space-y-5">
             <div className="flex items-center gap-2 border-b border-white/5 pb-4">
               <User className="h-4 w-4 text-primary" />
-              <h3 className="font-['Cinzel'] text-sm font-semibold tracking-wider text-white">Personal Details</h3>
+              <h3 className="font-['Montserrat'] text-sm font-semibold tracking-wider text-white">Personal Details</h3>
             </div>
             <div className="space-y-4 text-xs">
               {/* Full Name — editable */}
@@ -213,7 +213,7 @@ export default function AccountPage() {
           <div className="glass p-6 border border-white/5 space-y-5">
             <div className="flex items-center gap-2 border-b border-white/5 pb-4">
               <MapPin className="h-4 w-4 text-primary" />
-              <h3 className="font-['Cinzel'] text-sm font-semibold tracking-wider text-white">Shipping Address</h3>
+              <h3 className="font-['Montserrat'] text-sm font-semibold tracking-wider text-white">Shipping Address</h3>
             </div>
             {user.shippingAddress ? (
               <div className="space-y-2 text-xs text-zinc-300">
@@ -233,7 +233,7 @@ export default function AccountPage() {
 
           {/* Quick Actions */}
           <div className="md:col-span-2 glass p-6 border border-white/5">
-            <h3 className="font-['Cinzel'] text-sm font-semibold tracking-wider text-white border-b border-white/5 pb-4 mb-5">
+            <h3 className="font-['Montserrat'] text-sm font-semibold tracking-wider text-white border-b border-white/5 pb-4 mb-5">
               Quick Actions
             </h3>
             <div className="flex flex-wrap gap-3">

@@ -101,6 +101,7 @@ interface InventoryItem {
   collection: string;
   description?: string;
   isFeatured?: boolean;
+  variants?: string[];
 }
 
 type InventoryFormData = Omit<InventoryItem, 'id'>;
@@ -112,7 +113,7 @@ const DEFAULT_CATEGORIES = [
 
 const EMPTY_FORM: InventoryFormData = {
   productName: '', sku: '', category: 'CLOTHING', stock: 0, price: 0,
-  status: 'in-stock', image: '', material: '', gemstone: '', collection: '', description: '', isFeatured: false,
+  status: 'in-stock', image: '', material: '', gemstone: '', collection: '', description: '', isFeatured: false, variants: [],
 };
 
 const ITEMS_PER_PAGE = 5;
@@ -135,13 +136,14 @@ const DEFAULT_VARIANT_SUGGESTIONS = [
 interface AutocompleteProps {
   value: string;
   onChange: (val: string) => void;
+  onEnter?: () => void;
   suggestions: string[];
   placeholder?: string;
   disabled?: boolean;
   required?: boolean;
 }
 
-function AutocompleteInput({ value, onChange, suggestions, placeholder, disabled, required }: AutocompleteProps) {
+function AutocompleteInput({ value, onChange, onEnter, suggestions, placeholder, disabled, required }: AutocompleteProps) {
   const [open, setOpen] = useState(false);
 
   const filtered = useMemo(() => {
@@ -160,6 +162,7 @@ function AutocompleteInput({ value, onChange, suggestions, placeholder, disabled
         onChange={e => onChange(e.target.value)}
         onFocus={() => setOpen(true)}
         onBlur={() => setTimeout(() => setOpen(false), 150)}
+        onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); setOpen(false); onEnter?.(); } }}
         placeholder={placeholder}
         disabled={disabled}
         required={required}
@@ -211,6 +214,7 @@ export default function InventoryPage() {
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [form, setForm] = useState<InventoryFormData>(EMPTY_FORM);
   const [customCategoryInput, setCustomCategoryInput] = useState('');
+  const [variantInput, setVariantInput] = useState('');
   const [uploadProgress, setUploadProgress] = useState<number | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -268,6 +272,7 @@ export default function InventoryPage() {
   const openCreate = () => {
     setForm(EMPTY_FORM);
     setCustomCategoryInput('');
+    setVariantInput('');
     setSelectedItem(null);
     setModalMode('create');
     setModalOpen(true);
@@ -278,12 +283,27 @@ export default function InventoryPage() {
   const openEdit = (item: InventoryItem) => {
     setSelectedItem(item);
     const { id: _id, ...rest } = item;
-    setForm(rest);
+    setForm({ ...rest, variants: rest.variants ?? [] });
     setCustomCategoryInput(DEFAULT_CATEGORIES.includes(item.category) ? '' : item.category);
+    setVariantInput('');
     setModalMode('edit');
     setModalOpen(true);
     setError(null);
     resetUpload();
+  };
+
+  const addVariant = (value: string) => {
+    const v = value.trim();
+    if (!v) return;
+    setForm(prev => ({
+      ...prev,
+      variants: prev.variants?.includes(v) ? prev.variants : [...(prev.variants ?? []), v],
+    }));
+    setVariantInput('');
+  };
+
+  const removeVariant = (v: string) => {
+    setForm(prev => ({ ...prev, variants: prev.variants?.filter(x => x !== v) ?? [] }));
   };
 
   const handleFileSelect = async (file: File | undefined) => {
@@ -367,7 +387,7 @@ export default function InventoryPage() {
           <span className="text-[10px] tracking-[0.3em] uppercase text-primary font-semibold flex items-center gap-1 mb-1">
             <Package className="h-3.5 w-3.5" /> Catalog Management
           </span>
-          <h1 className="font-['Cinzel'] text-2xl font-bold tracking-widest text-white">INVENTORY</h1>
+          <h1 className="font-['Montserrat'] text-2xl font-bold tracking-widest text-white">INVENTORY</h1>
         </div>
         <button
           onClick={openCreate}
@@ -514,7 +534,7 @@ export default function InventoryPage() {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
           <div className="glass border border-white/10 max-w-lg w-full max-h-[90vh] overflow-y-auto p-6 space-y-5 animate-fadeIn">
             <div className="flex justify-between items-center border-b border-white/5 pb-4">
-              <h3 className="font-['Cinzel'] text-sm font-semibold tracking-wider text-white">
+              <h3 className="font-['Montserrat'] text-sm font-semibold tracking-wider text-white">
                 {modalMode === 'create' ? 'Add New Product' : 'Edit Product'}
               </h3>
               <button onClick={() => setModalOpen(false)} className="text-zinc-500 hover:text-white" disabled={isSaving}>
@@ -679,6 +699,47 @@ export default function InventoryPage() {
                     disabled={isSaving}
                   />
                 </div>
+                {/* Variants tag input */}
+                <div className="col-span-2 space-y-2">
+                  <label className="text-[10px] tracking-widest text-zinc-500 uppercase font-semibold">
+                    Variants <span className="normal-case tracking-normal font-normal text-zinc-600">(sizes, colors, options)</span>
+                  </label>
+                  <div className="flex gap-2">
+                    <AutocompleteInput
+                      value={variantInput}
+                      onChange={setVariantInput}
+                      onEnter={() => addVariant(variantInput)}
+                      suggestions={variantSuggestions}
+                      placeholder="e.g. S, M, L, Black, White…"
+                      disabled={isSaving}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => addVariant(variantInput)}
+                      disabled={isSaving || !variantInput.trim()}
+                      className="shrink-0 px-3 py-2 bg-primary/10 border border-primary/30 text-primary text-xs font-semibold hover:bg-primary/20 transition-all disabled:opacity-40"
+                    >
+                      Add
+                    </button>
+                  </div>
+                  {(form.variants ?? []).length > 0 && (
+                    <div className="flex flex-wrap gap-1.5 pt-1">
+                      {(form.variants ?? []).map((v) => (
+                        <span key={v} className="flex items-center gap-1 px-2.5 py-1 bg-white/5 border border-white/10 text-xs text-zinc-300 font-semibold uppercase tracking-wider">
+                          {v}
+                          <button
+                            type="button"
+                            onClick={() => removeVariant(v)}
+                            className="text-zinc-600 hover:text-red-400 transition-colors ml-0.5"
+                          >
+                            <X className="h-3 w-3" />
+                          </button>
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
                 {/* Category — select with custom option */}
                 <div className="space-y-1.5">
                   <label className="text-[10px] tracking-widest text-zinc-500 uppercase font-semibold">Category</label>
@@ -781,7 +842,7 @@ export default function InventoryPage() {
       {deleteId && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
           <div className="glass border border-white/10 max-w-sm w-full p-6 space-y-5 animate-fadeIn">
-            <h3 className="font-['Cinzel'] text-sm font-semibold tracking-wider text-white">Confirm Removal</h3>
+            <h3 className="font-['Montserrat'] text-sm font-semibold tracking-wider text-white">Confirm Removal</h3>
             <p className="text-zinc-400 text-xs leading-relaxed">
               Are you sure you want to remove <strong className="text-white">{inventory.find(i => i.id === deleteId)?.productName}</strong> from inventory? This cannot be undone.
             </p>

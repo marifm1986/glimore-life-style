@@ -183,7 +183,7 @@ export default function AdminUsersPage() {
           <span className="text-[10px] tracking-[0.3em] uppercase text-primary font-semibold flex items-center gap-1 mb-1">
             <Users className="h-3.5 w-3.5" />Account Registry
           </span>
-          <h1 className="font-['Cinzel'] text-2xl font-bold tracking-widest text-white">USER MANAGEMENT</h1>
+          <h1 className="font-['Montserrat'] text-2xl font-bold tracking-widest text-white">USER MANAGEMENT</h1>
           <p className="text-zinc-500 text-xs mt-1 font-light">Review registered accounts, manage roles, and control platform access.</p>
         </div>
         <div className="flex gap-2 self-start sm:self-auto">
@@ -203,7 +203,7 @@ export default function AdminUsersPage() {
           <div className="relative z-10 w-full max-w-md glass border border-white/10 p-6 space-y-6">
             <div className="flex items-center justify-between">
               <div>
-                <h3 className="font-['Cinzel'] text-sm font-bold tracking-widest text-white">ADD USER</h3>
+                <h3 className="font-['Montserrat'] text-sm font-bold tracking-widest text-white">ADD USER</h3>
                 <p className="text-[10px] text-zinc-500 mt-0.5">Create a new account with Firebase Auth</p>
               </div>
               <button onClick={() => setShowAddForm(false)} className="text-zinc-500 hover:text-white transition-colors"><X className="h-4 w-4" /></button>
@@ -260,7 +260,7 @@ export default function AdminUsersPage() {
           <div className="relative z-10 w-full max-w-sm glass border border-white/10 p-6 space-y-5">
             <div className="flex items-center justify-between">
               <div>
-                <h3 className="font-['Cinzel'] text-sm font-bold tracking-widest text-white">EDIT NAME</h3>
+                <h3 className="font-['Montserrat'] text-sm font-bold tracking-widest text-white">EDIT NAME</h3>
                 <p className="text-[10px] text-zinc-500 mt-0.5">{editUser.email}</p>
               </div>
               <button onClick={() => setEditUser(null)} className="text-zinc-500 hover:text-white transition-colors"><X className="h-4 w-4" /></button>
@@ -296,7 +296,7 @@ export default function AdminUsersPage() {
         <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
           <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={() => setDeleteConfirm(null)} />
           <div className="relative z-10 w-full max-w-sm glass border border-red-500/20 p-6 space-y-5">
-            <h3 className="font-['Cinzel'] text-sm font-bold tracking-widest text-white">DELETE ACCOUNT</h3>
+            <h3 className="font-['Montserrat'] text-sm font-bold tracking-widest text-white">DELETE ACCOUNT</h3>
             <p className="text-xs text-zinc-400 leading-relaxed">
               Permanently delete <strong className="text-white">{deleteConfirm.displayName}</strong> ({deleteConfirm.email})?
               This removes the account from Firebase Auth and Firestore and cannot be undone.

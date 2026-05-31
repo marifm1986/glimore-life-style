@@ -4,6 +4,7 @@ import stripe from '@/config/stripe';
 import { dbAdmin } from '@/config/firebase-admin';
 import * as admin from 'firebase-admin';
 import Stripe from 'stripe';
+import { notifyAdmins } from '@/lib/webpush';
 
 export async function POST(req: Request) {
   const body = await req.text();
@@ -57,6 +58,13 @@ export async function POST(req: Request) {
 
         await batch.commit();
         console.log(`Order ${metadata.orderId} successfully completed and stock updated.`);
+
+        notifyAdmins({
+          title: '✅ Payment Confirmed',
+          body: `Order ${metadata.orderId} has been paid via Stripe.`,
+          url: '/admin/orders',
+          tag: `paid-${metadata.orderId}`,
+        }).catch(() => {});
       } catch (dbError) {
         console.error(`Failed to update order database state on webhook:`, dbError);
       }

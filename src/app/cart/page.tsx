@@ -15,12 +15,17 @@ export default function CartPage() {
   const { user } = useAuth();
 
   const [shippingCharge, setShippingCharge] = useState(0);
+  const [whatsappNumber, setWhatsappNumber] = useState('');
 
   useEffect(() => {
-    const unsub = onSnapshot(doc(db, 'settings', 'shipping'), (snap) => {
+    const unsubShipping = onSnapshot(doc(db, 'settings', 'shipping'), (snap) => {
       setShippingCharge(snap.exists() ? (snap.data().amount ?? 0) : 0);
     });
-    return () => unsub();
+    const unsubSocial = onSnapshot(doc(db, 'settings', 'social'), (snap) => {
+      const mobile: string = snap.exists() ? (snap.data().mobile ?? '') : '';
+      setWhatsappNumber(mobile.replace(/\D/g, ''));
+    });
+    return () => { unsubShipping(); unsubSocial(); };
   }, []);
 
   const [shippingForm, setShippingForm] = useState({
@@ -57,14 +62,16 @@ export default function CartPage() {
 
     const orderTotal = cartTotal + shippingCharge * 100;
     const shippingLabel = shippingCharge === 0 ? 'Complimentary' : formatPrice(shippingCharge * 100);
-    const whatsappMessage = `New order from Glimore Life Style:\n\nCustomer: ${result.data.customerName}\nPhone: ${result.data.phone}\nEmail: ${user?.email || 'guest@glimore.style'}\n\nShipping Address:\n${result.data.line1}${result.data.line2 ? `, ${result.data.line2}` : ''}, ${result.data.city}, ${result.data.state}, ${result.data.postalCode}, ${result.data.country}\n\nOrder items:\n${cart
+    const whatsappMessage = `New order from Glimore Life Style:\n\nCustomer: ${result.data.customerName}\nPhone: ${result.data.phone}\nEmail: ${user?.email || 'guest@glimore.style'}\n\nShipping Address:\n${result.data.line1}${result.data.line2 ? `, ${result.data.line2}` : ''}, ${result.data.city}, ${result.data.country}\n\nOrder items:\n${cart
       .map(
         (item) => `${item.title} x${item.quantity} - ${formatPrice(item.price * item.quantity)}`
       )
       .join('\n')}\n\nSubtotal: ${formatPrice(cartTotal)}\nShipping: ${shippingLabel}\nEstimated Total: ${formatPrice(orderTotal)}`;
 
-    const whatsappUrl = `https://wa.me/8801962059698?text=${encodeURIComponent(whatsappMessage)}`;
-    window.open(whatsappUrl, '_blank');
+    if (whatsappNumber) {
+      const whatsappUrl = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(whatsappMessage)}`;
+      window.open(whatsappUrl, '_blank');
+    }
 
     try {
       const response = await fetch('/api/checkout/session', {
@@ -101,7 +108,7 @@ export default function CartPage() {
         <div className="inline-flex p-5 rounded-full bg-zinc-950 border border-white/5 text-zinc-500">
           <ShoppingBag className="h-10 w-10 text-primary" />
         </div>
-        <h2 className="font-['Cinzel'] text-2xl font-semibold tracking-wider text-white">YOUR CART IS EMPTY</h2>
+        <h2 className="font-['Montserrat'] text-2xl font-semibold tracking-wider text-white">YOUR CART IS EMPTY</h2>
         <p className="text-zinc-500 text-xs tracking-wider max-w-sm mx-auto font-light">
           You have not added any designer pieces to your active order yet. Explore our latest lookbooks to begin.
         </p>
@@ -117,7 +124,7 @@ export default function CartPage() {
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-      <h1 className="font-['Cinzel'] text-3xl font-bold tracking-widest text-white mb-10 text-left border-b border-white/5 pb-4">
+      <h1 className="font-['Montserrat'] text-3xl font-bold tracking-widest text-white mb-10 text-left border-b border-white/5 pb-4">
         YOUR BAG
       </h1>
 
@@ -126,8 +133,8 @@ export default function CartPage() {
         {/* LEFT: Cart List (2 Cols) */}
         <div className="lg:col-span-2 space-y-6">
           {cart.map((item) => (
-            <div 
-              key={item.productId}
+            <div
+              key={`${item.productId}::${item.variant || ''}`}
               className="flex flex-col sm:flex-row gap-6 glass p-5 border border-white/5 items-center justify-between text-left"
             >
               {/* Product Info Frame */}
@@ -138,9 +145,14 @@ export default function CartPage() {
                 </div>
                 <div className="space-y-1 min-w-0">
                   <span className="text-[9px] tracking-wider text-zinc-500 uppercase">{item.vendorName}</span>
-                  <h3 className="font-['Cinzel'] text-xs sm:text-sm font-semibold text-white tracking-wide truncate">
+                  <h3 className="font-['Montserrat'] text-xs sm:text-sm font-semibold text-white tracking-wide truncate">
                     {item.title}
                   </h3>
+                  {item.variant && (
+                    <span className="inline-block text-[9px] px-2 py-0.5 bg-primary/10 border border-primary/20 text-primary uppercase tracking-wider font-semibold">
+                      {item.variant}
+                    </span>
+                  )}
                   <p className="text-xs text-primary font-medium">{formatPrice(item.price)}</p>
                 </div>
               </div>
@@ -148,8 +160,8 @@ export default function CartPage() {
               {/* Adjust Amount controls */}
               <div className="flex items-center gap-6 justify-between w-full sm:w-auto">
                 <div className="flex border border-white/10 bg-black">
-                  <button 
-                    onClick={() => updateQuantity(item.productId, item.quantity - 1)}
+                  <button
+                    onClick={() => updateQuantity(item.productId, item.quantity - 1, item.variant)}
                     className="px-3 py-1.5 text-zinc-500 hover:text-white text-xs"
                   >
                     -
@@ -157,16 +169,16 @@ export default function CartPage() {
                   <span className="px-3 py-1.5 text-[10px] text-white flex items-center font-medium">
                     {item.quantity}
                   </span>
-                  <button 
-                    onClick={() => updateQuantity(item.productId, item.quantity + 1)}
+                  <button
+                    onClick={() => updateQuantity(item.productId, item.quantity + 1, item.variant)}
                     className="px-3 py-1.5 text-zinc-500 hover:text-white text-xs"
                   >
                     +
                   </button>
                 </div>
 
-                <button 
-                  onClick={() => removeFromCart(item.productId)}
+                <button
+                  onClick={() => removeFromCart(item.productId, item.variant)}
                   className="text-zinc-500 hover:text-destructive transition-colors"
                 >
                   <Trash2 className="h-4 w-4" />
@@ -179,7 +191,7 @@ export default function CartPage() {
         {/* RIGHT: Shipping Form & Summary (1 Col) */}
         <div className="space-y-6">
           <form onSubmit={handleCheckout} className="glass p-6 border border-white/5 space-y-6 text-left">
-            <h3 className="font-['Cinzel'] text-sm font-semibold tracking-wider text-white border-b border-white/5 pb-3">
+            <h3 className="font-['Montserrat'] text-sm font-semibold tracking-wider text-white border-b border-white/5 pb-3">
               Order Summary
             </h3>
 
@@ -271,7 +283,7 @@ export default function CartPage() {
               </div>
               <div className="h-[1px] w-full bg-white/5" />
               <div className="flex justify-between text-white font-semibold text-sm pt-1">
-                <span className="font-['Cinzel'] tracking-wider">Estimated Total</span>
+                <span className="font-['Montserrat'] tracking-wider">Estimated Total</span>
                 <span className="text-primary">{formatPrice(cartTotal + shippingCharge * 100)}</span>
               </div>
               <span className="text-[10px] text-zinc-500 uppercase font-semibold tracking-wider">CASH ON DELIVERY</span>
@@ -292,8 +304,11 @@ export default function CartPage() {
             >
               <CreditCard className="h-4 w-4" /> {loading ? 'Fulfilling secure route...' : 'BUY NOW'}
             </button>
-            <span className="text-[9px] text-zinc-500 leading-normal text-center block mt-2">
-              Runway garments are fully insured. Secure payouts routed securely via Stripe.
+            <span className="text-[12px] text-zinc-200 leading-normal text-center block mt-2">
+              Estimated delivery time is 2–5 business days, depending on your location.
+            </span>
+            <span className="text-[12px] text-zinc-200 leading-normal text-center block mt-2">
+              for any inquiries, please contact us on WhatsApp at <a href={`https://wa.me/${whatsappNumber}`} className="text-primary underline">{whatsappNumber}</a> 
             </span>
           </form>
         </div>

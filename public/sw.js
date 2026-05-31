@@ -1,6 +1,40 @@
-const SHELL_CACHE = 'glimore-shell-v1';
-const ASSET_CACHE = 'glimore-assets-v1';
-const IMAGE_CACHE = 'glimore-images-v1';
+// ── Push Notifications ────────────────────────────────────────────────────────
+self.addEventListener('push', (event) => {
+  let data = { title: 'New Order', body: 'A new order has been placed.', url: '/admin/orders', tag: 'new-order', icon: '/only_logo.webp' };
+  try { if (event.data) data = { ...data, ...event.data.json() }; } catch {}
+  event.waitUntil(
+    self.registration.showNotification(data.title, {
+      body: data.body,
+      icon: data.icon,
+      badge: '/only_logo.webp',
+      tag: data.tag,
+      renotify: true,
+      data: { url: data.url },
+      vibrate: [200, 100, 200],
+    })
+  );
+});
+
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close();
+  const url = event.notification.data?.url || '/admin/orders';
+  event.waitUntil(
+    clients.matchAll({ type: 'window', includeUncontrolled: true }).then((list) => {
+      for (const client of list) {
+        if (client.url.includes('/admin') && 'focus' in client) {
+          client.navigate(url);
+          return client.focus();
+        }
+      }
+      return clients.openWindow(url);
+    })
+  );
+});
+
+// ── Caching ───────────────────────────────────────────────────────────────────
+const SHELL_CACHE = 'glimore-shell-v2';
+const ASSET_CACHE = 'glimore-assets-v2';
+const IMAGE_CACHE = 'glimore-images-v2';
 
 const SKIP_PATTERNS = [
   /firestore\.googleapis\.com/,
@@ -10,6 +44,7 @@ const SKIP_PATTERNS = [
   /firebaseapp\.com/,
   /\/api\//,
   /chrome-extension/,
+  /\/_next\//,       // Next.js bundles — hash-named, let the browser HTTP cache handle them
 ];
 
 function shouldSkip(url) {
@@ -46,12 +81,6 @@ self.addEventListener('fetch', (event) => {
   if (request.method !== 'GET' || shouldSkip(url)) return;
 
   const urlObj = new URL(url);
-
-  // Next.js hashed static bundles — cache-first forever (content-hashed filenames)
-  if (urlObj.pathname.startsWith('/_next/static/')) {
-    event.respondWith(cacheFirst(request, ASSET_CACHE));
-    return;
-  }
 
   // Remote images (Cloudinary, Unsplash) — cache-first with network fallback
   if (

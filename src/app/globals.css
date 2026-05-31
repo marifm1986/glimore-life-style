@@ -23,6 +23,28 @@
     --ring: 43 74% 66%;
     --radius: 0.5rem;
   }
+
+  .light {
+    --background: 36 33% 96%;
+    --foreground: 240 10% 8%;
+    --card: 0 0% 100%;
+    --card-foreground: 240 10% 8%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 240 10% 8%;
+    --primary: 43 65% 42%; /* Deeper gold for light bg */
+    --primary-foreground: 0 0% 100%;
+    --secondary: 36 20% 90%;
+    --secondary-foreground: 240 10% 8%;
+    --muted: 36 20% 90%;
+    --muted-foreground: 240 5% 40%;
+    --accent: 43 65% 42%;
+    --accent-foreground: 0 0% 100%;
+    --destructive: 0 72% 44%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 36 15% 82%;
+    --input: 36 15% 82%;
+    --ring: 43 65% 42%;
+  }
 }
 
 @theme inline {
@@ -53,7 +75,7 @@
 body {
   background-color: hsl(var(--background));
   color: hsl(var(--foreground));
-  font-family: 'Inter', system-ui, sans-serif;
+  font-family: 'Montserrat', 'Inter', sans-serif;
   margin: 0;
   padding: 0;
   overflow-x: hidden;
@@ -100,6 +122,21 @@ body {
   50% { box-shadow: 0 0 0 6px rgba(212, 175, 55, 0); }
 }
 
+/* Light theme overrides */
+.light .glass {
+  background: rgba(255, 253, 248, 0.75);
+  border-color: rgba(212, 175, 55, 0.15);
+}
+
+.light .dark-gold-border {
+  border-color: rgba(150, 110, 20, 0.2);
+}
+
+.light .dark-gold-border:hover {
+  border-color: rgba(150, 110, 20, 0.45);
+  box-shadow: 0 0 15px rgba(150, 110, 20, 0.08);
+}
+
 /* Custom Scrollbar */
 ::-webkit-scrollbar {
   width: 6px;
@@ -116,4 +153,12 @@ body {
 
 ::-webkit-scrollbar-thumb:hover {
   background: #dfc980;
+}
+
+.light ::-webkit-scrollbar-track {
+  background: #f0ebe0;
+}
+
+.light ::-webkit-scrollbar-thumb {
+  background: #c8b070;
 }

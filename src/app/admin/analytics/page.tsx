@@ -183,7 +183,7 @@ export default function AdminAnalyticsPage() {
         <span className="text-[10px] tracking-[0.3em] uppercase text-primary font-semibold flex items-center gap-1 mb-1">
           <BarChart3 className="h-3.5 w-3.5" /> Platform Intelligence
         </span>
-        <h1 className="font-['Cinzel'] text-2xl font-bold tracking-widest text-white">ANALYTICS</h1>
+        <h1 className="font-['Montserrat'] text-2xl font-bold tracking-widest text-white">ANALYTICS</h1>
       </div>
 
       <div className="grid grid-cols-2 xl:grid-cols-4 gap-5">
@@ -211,7 +211,7 @@ export default function AdminAnalyticsPage() {
         <div className="xl:col-span-2 glass border border-white/5 p-6 space-y-6">
           <div className="flex items-center gap-2">
             <TrendingUp className="h-4 w-4 text-primary" />
-            <h3 className="font-['Cinzel'] text-sm font-semibold tracking-wider text-white">Monthly Revenue</h3>
+            <h3 className="font-['Montserrat'] text-sm font-semibold tracking-wider text-white">Monthly Revenue</h3>
           </div>
 
           <div className="flex items-end gap-3 h-48">
@@ -246,7 +246,7 @@ export default function AdminAnalyticsPage() {
         <div className="glass border border-white/5 p-6 space-y-5">
           <div className="flex items-center gap-2">
             <Award className="h-4 w-4 text-primary" />
-            <h3 className="font-['Cinzel'] text-sm font-semibold tracking-wider text-white">Top Categories</h3>
+            <h3 className="font-['Montserrat'] text-sm font-semibold tracking-wider text-white">Top Categories</h3>
           </div>
           <div className="space-y-4">
             {topCategories.length === 0 ? (
@@ -278,7 +278,7 @@ export default function AdminAnalyticsPage() {
       <div className="glass border border-white/5 overflow-hidden">
         <div className="p-5 border-b border-white/5 flex items-center gap-2">
           <BarChart3 className="h-4 w-4 text-primary" />
-          <h3 className="font-['Cinzel'] text-sm font-semibold tracking-wider text-white">Top Performing Products</h3>
+          <h3 className="font-['Montserrat'] text-sm font-semibold tracking-wider text-white">Top Performing Products</h3>
         </div>
         <div className="overflow-x-auto">
           <table className="w-full text-xs text-zinc-400">

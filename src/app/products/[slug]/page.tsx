@@ -20,6 +20,7 @@ interface InventoryItem {
   gemstone: string;
   collection: string;
   description?: string;
+  variants?: string[];
 }
 
 export default function ProductDetailPage({ params }: { params: Promise<{ slug: string }> }) {
@@ -29,6 +30,8 @@ export default function ProductDetailPage({ params }: { params: Promise<{ slug: 
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
   const [quantity, setQuantity] = useState(1);
+  const [selectedVariant, setSelectedVariant] = useState<string | null>(null);
+  const [variantError, setVariantError] = useState(false);
   const [addedMessage, setAddedMessage] = useState(false);
 
   useEffect(() => {
@@ -46,6 +49,11 @@ export default function ProductDetailPage({ params }: { params: Promise<{ slug: 
 
   const handleAddToCart = () => {
     if (!product) return;
+    const hasVariants = product.variants && product.variants.length > 0;
+    if (hasVariants && !selectedVariant) {
+      setVariantError(true);
+      return;
+    }
     addToCart({
       productId: product.id,
       title: product.productName,
@@ -54,6 +62,7 @@ export default function ProductDetailPage({ params }: { params: Promise<{ slug: 
       image: product.image,
       vendorId: '',
       vendorName: product.collection,
+      ...(selectedVariant ? { variant: selectedVariant } : {}),
     });
     setAddedMessage(true);
     setTimeout(() => setAddedMessage(false), 3000);
@@ -117,7 +126,7 @@ export default function ProductDetailPage({ params }: { params: Promise<{ slug: 
             <span className="text-[10px] tracking-[0.3em] uppercase text-primary font-semibold flex items-center gap-1">
               <Sparkles className="h-3.5 w-3.5" /> {product.collection} Collection
             </span>
-            <h1 className="font-['Cinzel'] text-3xl sm:text-4xl font-bold tracking-widest text-white leading-tight">
+            <h1 className="font-['Montserrat'] text-3xl sm:text-4xl font-bold tracking-widest text-white leading-tight">
               {product.productName}
             </h1>
             <p className="text-2xl font-semibold text-primary">{formatPrice(product.price)}</p>
@@ -146,6 +155,38 @@ export default function ProductDetailPage({ params }: { params: Promise<{ slug: 
           </div>
 
           <div className="h-px w-full bg-white/5" />
+
+          {/* Variants */}
+          {product.variants && product.variants.length > 0 && (
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <h3 className="text-[10px] tracking-widest text-zinc-500 uppercase font-semibold">
+                  Select Option
+                  {selectedVariant && (
+                    <span className="ml-2 text-primary normal-case tracking-normal font-bold">— {selectedVariant}</span>
+                  )}
+                </h3>
+                {variantError && (
+                  <span className="text-[10px] text-red-400 font-semibold">Please select an option</span>
+                )}
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {product.variants.map((v) => (
+                  <button
+                    key={v}
+                    onClick={() => { setSelectedVariant(v); setVariantError(false); }}
+                    className={`px-3.5 py-1.5 text-[11px] font-semibold uppercase tracking-wider border transition-all ${
+                      selectedVariant === v
+                        ? 'bg-primary text-black border-primary'
+                        : 'border-white/15 text-zinc-400 hover:border-primary/60 hover:text-white bg-transparent'
+                    }`}
+                  >
+                    {v}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
 
           {/* Stock */}
           <div className="flex items-center gap-3">

@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import stripe from '@/config/stripe';
 import { dbAdmin } from '@/config/firebase-admin';
+import { notifyAdmins } from '@/lib/webpush';
 
 const isMockStripe = !process.env.STRIPE_SECRET_KEY || process.env.STRIPE_SECRET_KEY.startsWith('sk_test_mock');
 
@@ -43,6 +44,14 @@ export async function POST(request: Request) {
     } catch (dbError) {
       console.warn('Firestore failed to write order (likely local simulation):', dbError);
     }
+
+    // Notify admins — fire and forget, never block checkout
+    notifyAdmins({
+      title: '🛒 New Order Received',
+      body: `${customerEmail || 'A customer'} placed an order for ${cartItems.length} item${cartItems.length !== 1 ? 's' : ''}.`,
+      url: '/admin/orders',
+      tag: `order-${orderId}`,
+    }).catch(() => {});
 
     if (isMockStripe) {
       // Simulate checkout session redirect URL

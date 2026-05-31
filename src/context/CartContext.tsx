@@ -4,19 +4,25 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 
 export interface CartItem {
   productId: string;
+  sku?: string;
   title: string;
   price: number; // in cents
   quantity: number;
   image: string;
   vendorId: string;
   vendorName: string;
+  variant?: string;
+}
+
+function itemKey(productId: string, variant?: string) {
+  return `${productId}::${variant || ''}`;
 }
 
 interface CartContextType {
   cart: CartItem[];
   addToCart: (item: CartItem) => void;
-  removeFromCart: (productId: string) => void;
-  updateQuantity: (productId: string, quantity: number) => void;
+  removeFromCart: (productId: string, variant?: string) => void;
+  updateQuantity: (productId: string, quantity: number, variant?: string) => void;
   clearCart: () => void;
   cartTotal: number;
 }
@@ -45,11 +51,12 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const addToCart = (newItem: CartItem) => {
-    const existing = cart.find(i => i.productId === newItem.productId);
+    const key = itemKey(newItem.productId, newItem.variant);
+    const existing = cart.find(i => itemKey(i.productId, i.variant) === key);
     if (existing) {
       saveCart(
         cart.map(i =>
-          i.productId === newItem.productId
+          itemKey(i.productId, i.variant) === key
             ? { ...i, quantity: i.quantity + newItem.quantity }
             : i
         )
@@ -59,17 +66,18 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  const removeFromCart = (productId: string) => {
-    saveCart(cart.filter(i => i.productId !== productId));
+  const removeFromCart = (productId: string, variant?: string) => {
+    saveCart(cart.filter(i => itemKey(i.productId, i.variant) !== itemKey(productId, variant)));
   };
 
-  const updateQuantity = (productId: string, quantity: number) => {
+  const updateQuantity = (productId: string, quantity: number, variant?: string) => {
     if (quantity <= 0) {
-      removeFromCart(productId);
+      removeFromCart(productId, variant);
       return;
     }
+    const key = itemKey(productId, variant);
     saveCart(
-      cart.map(i => (i.productId === productId ? { ...i, quantity } : i))
+      cart.map(i => (itemKey(i.productId, i.variant) === key ? { ...i, quantity } : i))
     );
   };
 

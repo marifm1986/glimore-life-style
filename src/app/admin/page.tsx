@@ -8,6 +8,7 @@ import { db } from '@/config/firebase';
 import {
   collection,
   doc,
+  getDoc,
   limit,
   onSnapshot,
   orderBy,
@@ -81,6 +82,7 @@ export default function AdminDashboard() {
   const [inventory, setInventory] = useState<FirestoreInventory[]>([]);
   const [users, setUsers] = useState<FirestoreUser[]>([]);
   const [vendors, setVendors] = useState<FirestoreVendor[]>([]);
+  const [feePercent, setFeePercent] = useState(8);
 
   useEffect(() => {
     if (!loading && user && user.role !== 'admin') router.replace('/login');
@@ -114,6 +116,13 @@ export default function AdminDashboard() {
       (snap) => setVendors(snap.docs.map(d => ({ id: d.id, ...d.data() } as FirestoreVendor)))
     );
 
+    getDoc(doc(db, 'settings', 'general')).then((snap) => {
+      if (snap.exists()) {
+        const fee = parseFloat(snap.data().fee ?? '8');
+        if (!isNaN(fee) && fee > 0) setFeePercent(fee);
+      }
+    });
+
     return () => {
       unsubRecent();
       unsubAll();
@@ -124,11 +133,16 @@ export default function AdminDashboard() {
   }, [user]);
 
   const consolidatedVolume = useMemo(
-    () => allOrders.filter(o => o.paymentStatus === 'paid').reduce((s, o) => s + o.totalAmount, 0),
+    () => allOrders
+      .filter(o => o.paymentStatus !== 'failed' && o.paymentStatus !== 'refunded')
+      .reduce((s, o) => s + o.totalAmount, 0),
     [allOrders]
   );
 
-  const platformFee = useMemo(() => consolidatedVolume * 0.08, [consolidatedVolume]);
+  const platformFee = useMemo(
+    () => consolidatedVolume * (feePercent / 100),
+    [consolidatedVolume, feePercent]
+  );
 
   const activeMerchants = useMemo(
     () => new Set(inventory.map(i => i.collection).filter(Boolean)).size,
@@ -178,7 +192,7 @@ export default function AdminDashboard() {
         <span className="text-[10px] tracking-[0.3em] uppercase text-primary font-semibold flex items-center gap-1 mb-1">
           <Sparkles className="h-3.5 w-3.5" /> High Console Panel
         </span>
-        <h1 className="font-['Cinzel'] text-2xl font-bold tracking-widest text-white">
+        <h1 className="font-['Montserrat'] text-2xl font-bold tracking-widest text-white">
           SUPER ADMIN DASHBOARD
         </h1>
       </div>
@@ -186,7 +200,7 @@ export default function AdminDashboard() {
       <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-5">
         {[
           { label: 'Consolidated Volume', value: formatPrice(consolidatedVolume), icon: DollarSign, highlight: true },
-          { label: 'Platform Fee (8%)', value: formatPrice(platformFee), icon: TrendingUp, highlight: false },
+          { label: `Platform Fee (${feePercent}%)`, value: formatPrice(platformFee), icon: TrendingUp, highlight: false },
           { label: 'Active Merchants', value: `${activeMerchants} Brands`, icon: Award, highlight: false },
           { label: 'Total Customers', value: `${totalCustomers} Accounts`, icon: Users, highlight: false },
         ].map((metric) => (
@@ -209,7 +223,7 @@ export default function AdminDashboard() {
         <div className="xl:col-span-2 glass border border-white/5 overflow-hidden">
           <div className="p-5 border-b border-white/5 flex items-center gap-2">
             <ShoppingCart className="h-4 w-4 text-primary" />
-            <h3 className="font-['Cinzel'] text-sm font-semibold tracking-wider text-white">Recent Orders</h3>
+            <h3 className="font-['Montserrat'] text-sm font-semibold tracking-wider text-white">Recent Orders</h3>
           </div>
           <div className="overflow-x-auto">
             <table className="w-full text-xs text-zinc-400">
@@ -265,7 +279,7 @@ export default function AdminDashboard() {
             <div className="p-5 border-b border-white/5 flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <Award className="h-4 w-4 text-primary" />
-                <h3 className="font-['Cinzel'] text-sm font-semibold tracking-wider text-white">
+                <h3 className="font-['Montserrat'] text-sm font-semibold tracking-wider text-white">
                   Merchant Applications
                 </h3>
               </div>
@@ -291,7 +305,7 @@ export default function AdminDashboard() {
                           </div>
                         )}
                         <div className="min-w-0">
-                          <p className="font-['Cinzel'] text-xs font-bold text-white tracking-wide truncate">{vendor.name}</p>
+                          <p className="font-['Montserrat'] text-xs font-bold text-white tracking-wide truncate">{vendor.name}</p>
                           <p className="text-[9px] text-zinc-500 truncate">{formatTs(vendor.createdAt)}</p>
                         </div>
                       </div>
@@ -330,7 +344,7 @@ export default function AdminDashboard() {
           </div>
 
           <div className="glass p-5 border border-white/5 space-y-4">
-            <h3 className="font-['Cinzel'] text-sm font-semibold tracking-wider text-white border-b border-white/5 pb-3">
+            <h3 className="font-['Montserrat'] text-sm font-semibold tracking-wider text-white border-b border-white/5 pb-3">
               System Status
             </h3>
             <div className="space-y-3 text-xs">
