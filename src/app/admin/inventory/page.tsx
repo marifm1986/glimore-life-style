@@ -10,6 +10,7 @@ import {
   doc, serverTimestamp, query, orderBy,
 } from 'firebase/firestore';
 import { db } from '@/config/firebase';
+import { useFormState, useFormStatus } from 'react-dom';
 
 async function compressImage(file: File): Promise<Blob> {
   const MAX_DIM = 1200;
@@ -194,6 +195,7 @@ function getStatusLabel(status: string) {
 }
 
 export default function InventoryPage() {
+  const {pending, data, action} = useFormStatus();
   const router = useRouter();
   const { user, loading } = useAuth();
   const [inventory, setInventory] = useState<InventoryItem[]>([]);

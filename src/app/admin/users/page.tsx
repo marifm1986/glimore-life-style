@@ -3,7 +3,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
-import { RefreshCcw, Search, Users, Shield, Award, User, UserPlus, X } from 'lucide-react';
+import { RefreshCcw, Search, Users, Shield, Award, User, UserPlus, X, Pencil, Trash2 } from 'lucide-react';
 
 type AdminUser = {
   uid: string;
@@ -43,10 +43,19 @@ export default function AdminUsersPage() {
   const [loadingUsers, setLoadingUsers] = useState(false);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+
   const [showAddForm, setShowAddForm] = useState(false);
   const [addForm, setAddForm] = useState({ displayName: '', email: '', password: '', role: 'customer' as 'customer' | 'vendor' | 'admin' });
   const [addLoading, setAddLoading] = useState(false);
   const [addError, setAddError] = useState<string | null>(null);
+
+  const [editUser, setEditUser] = useState<AdminUser | null>(null);
+  const [editName, setEditName] = useState('');
+  const [editLoading, setEditLoading] = useState(false);
+  const [editError, setEditError] = useState<string | null>(null);
+
+  const [deleteConfirm, setDeleteConfirm] = useState<AdminUser | null>(null);
+  const [deleteLoading, setDeleteLoading] = useState(false);
 
   useEffect(() => {
     if (!loading && user && user.role !== 'admin') router.replace('/login');
@@ -61,12 +70,8 @@ export default function AdminUsersPage() {
     setError(null);
     try {
       const res = await fetch('/api/admin/users', { cache: 'no-store' });
-      if (!res.ok) {
-        const payload = await res.json();
-        throw new Error(payload.error || 'Unable to load users');
-      }
-      const data = await res.json();
-      setUsers(data.users || []);
+      if (!res.ok) throw new Error((await res.json()).error || 'Unable to load users');
+      setUsers((await res.json()).users || []);
     } catch (err: any) {
       setError(err.message || 'Failed to fetch users');
     } finally {
@@ -83,15 +88,54 @@ export default function AdminUsersPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ uid, role: newRole }),
       });
-      if (!res.ok) {
-        const payload = await res.json();
-        throw new Error(payload.error || 'Unable to update role');
-      }
+      if (!res.ok) throw new Error((await res.json()).error || 'Unable to update role');
       await loadUsers();
     } catch (err: any) {
       setError(err.message || 'Failed to update user role');
     } finally {
       setActionLoading(null);
+    }
+  };
+
+  const saveEditName = async (e: React.SyntheticEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    if (!editUser) return;
+    setEditLoading(true);
+    setEditError(null);
+    try {
+      const res = await fetch('/api/admin/users', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ uid: editUser.uid, displayName: editName }),
+      });
+      if (!res.ok) throw new Error((await res.json()).error || 'Failed to update name');
+      setEditUser(null);
+      await loadUsers();
+    } catch (err: any) {
+      setEditError(err.message);
+    } finally {
+      setEditLoading(false);
+    }
+  };
+
+  const confirmDelete = async () => {
+    if (!deleteConfirm) return;
+    setDeleteLoading(true);
+    setError(null);
+    try {
+      const res = await fetch('/api/admin/users', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ uid: deleteConfirm.uid }),
+      });
+      if (!res.ok) throw new Error((await res.json()).error || 'Failed to delete user');
+      setDeleteConfirm(null);
+      await loadUsers();
+    } catch (err: any) {
+      setError(err.message);
+      setDeleteConfirm(null);
+    } finally {
+      setDeleteLoading(false);
     }
   };
 
@@ -105,25 +149,21 @@ export default function AdminUsersPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(addForm),
       });
-      const payload = await res.json();
-      if (!res.ok) throw new Error(payload.error || 'Failed to create user');
+      if (!res.ok) throw new Error((await res.json()).error || 'Failed to create user');
       setShowAddForm(false);
       setAddForm({ displayName: '', email: '', password: '', role: 'customer' });
       await loadUsers();
     } catch (err: any) {
-      setAddError(err.message || 'Failed to create user');
+      setAddError(err.message);
     } finally {
       setAddLoading(false);
     }
   };
 
-  const filteredUsers = useMemo(() => {
-    return users.filter((u) => {
-      const matchesSearch = [u.displayName, u.email, u.vendorId || ''].join(' ').toLowerCase().includes(search.toLowerCase());
-      const matchesRole = roleFilter === 'all' || u.role === roleFilter;
-      return matchesSearch && matchesRole;
-    });
-  }, [users, search, roleFilter]);
+  const filteredUsers = useMemo(() => users.filter((u) => {
+    const matchesSearch = [u.displayName, u.email, u.vendorId || ''].join(' ').toLowerCase().includes(search.toLowerCase());
+    return matchesSearch && (roleFilter === 'all' || u.role === roleFilter);
+  }), [users, search, roleFilter]);
 
   const formatDate = (value: string) => {
     try { return new Date(value).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }); }
@@ -131,11 +171,7 @@ export default function AdminUsersPage() {
   };
 
   if (loading || !user) {
-    return (
-      <div className="min-h-96 flex items-center justify-center">
-        <p className="text-zinc-500 text-xs">Verifying access...</p>
-      </div>
-    );
+    return <div className="min-h-96 flex items-center justify-center"><p className="text-zinc-500 text-xs">Verifying access...</p></div>;
   }
 
   return (
@@ -145,30 +181,22 @@ export default function AdminUsersPage() {
       <div className="border-b border-white/5 pb-6 flex flex-col sm:flex-row sm:items-end justify-between gap-4">
         <div>
           <span className="text-[10px] tracking-[0.3em] uppercase text-primary font-semibold flex items-center gap-1 mb-1">
-            <Users className="h-3.5 w-3.5" /> Account Registry
+            <Users className="h-3.5 w-3.5" />Account Registry
           </span>
           <h1 className="font-['Cinzel'] text-2xl font-bold tracking-widest text-white">USER MANAGEMENT</h1>
-          <p className="text-zinc-500 text-xs mt-1 font-light">
-            Review registered accounts, manage roles, and control platform access.
-          </p>
+          <p className="text-zinc-500 text-xs mt-1 font-light">Review registered accounts, manage roles, and control platform access.</p>
         </div>
         <div className="flex gap-2 self-start sm:self-auto">
-          <button
-            onClick={() => setShowAddForm(true)}
-            className="flex items-center gap-2 px-4 py-2.5 bg-primary text-black text-xs font-semibold tracking-wider uppercase hover:bg-opacity-90 transition-all"
-          >
+          <button onClick={() => setShowAddForm(true)} className="flex items-center gap-2 px-4 py-2.5 bg-primary text-black text-xs font-semibold tracking-wider uppercase hover:bg-opacity-90 transition-all">
             <UserPlus className="h-3.5 w-3.5" /> Add User
           </button>
-          <button
-            onClick={loadUsers}
-            className="flex items-center gap-2 px-4 py-2.5 border border-white/10 text-zinc-400 text-xs font-semibold tracking-wider uppercase hover:border-primary hover:text-white transition-all"
-          >
+          <button onClick={loadUsers} className="flex items-center gap-2 px-4 py-2.5 border border-white/10 text-zinc-400 text-xs font-semibold tracking-wider uppercase hover:border-primary hover:text-white transition-all">
             <RefreshCcw className="h-3.5 w-3.5" /> Refresh
           </button>
         </div>
       </div>
 
-      {/* Add User Panel */}
+      {/* Add User Modal */}
       {showAddForm && (
         <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
           <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={() => setShowAddForm(false)} />
@@ -178,76 +206,45 @@ export default function AdminUsersPage() {
                 <h3 className="font-['Cinzel'] text-sm font-bold tracking-widest text-white">ADD USER</h3>
                 <p className="text-[10px] text-zinc-500 mt-0.5">Create a new account with Firebase Auth</p>
               </div>
-              <button onClick={() => setShowAddForm(false)} className="text-zinc-500 hover:text-white transition-colors">
-                <X className="h-4 w-4" />
-              </button>
+              <button onClick={() => setShowAddForm(false)} className="text-zinc-500 hover:text-white transition-colors"><X className="h-4 w-4" /></button>
             </div>
-
             <form onSubmit={createUser} className="space-y-4">
-              <div className="space-y-1.5">
-                <label className="text-[10px] tracking-widest text-zinc-500 uppercase font-semibold">Full Name</label>
-                <input
-                  type="text"
-                  required
-                  value={addForm.displayName}
-                  onChange={e => setAddForm(p => ({ ...p, displayName: e.target.value }))}
-                  placeholder="John Doe"
-                  className="w-full bg-black border border-white/10 px-3 py-2 text-xs focus:outline-none focus:border-primary text-white"
-                />
-              </div>
-              <div className="space-y-1.5">
-                <label className="text-[10px] tracking-widest text-zinc-500 uppercase font-semibold">Email</label>
-                <input
-                  type="email"
-                  required
-                  value={addForm.email}
-                  onChange={e => setAddForm(p => ({ ...p, email: e.target.value }))}
-                  placeholder="user@example.com"
-                  className="w-full bg-black border border-white/10 px-3 py-2 text-xs focus:outline-none focus:border-primary text-white"
-                />
-              </div>
-              <div className="space-y-1.5">
-                <label className="text-[10px] tracking-widest text-zinc-500 uppercase font-semibold">Password</label>
-                <input
-                  type="password"
-                  required
-                  minLength={6}
-                  value={addForm.password}
-                  onChange={e => setAddForm(p => ({ ...p, password: e.target.value }))}
-                  placeholder="Min. 6 characters"
-                  className="w-full bg-black border border-white/10 px-3 py-2 text-xs focus:outline-none focus:border-primary text-white"
-                />
-              </div>
+              {[
+                { label: 'Full Name', key: 'displayName', type: 'text', placeholder: 'John Doe' },
+                { label: 'Email', key: 'email', type: 'email', placeholder: 'user@example.com' },
+                { label: 'Password', key: 'password', type: 'password', placeholder: 'Min. 6 characters' },
+              ].map((f) => (
+                <div key={f.key} className="space-y-1.5">
+                  <label className="text-[10px] tracking-widest text-zinc-500 uppercase font-semibold">{f.label}</label>
+                  <input
+                    type={f.type}
+                    required
+                    minLength={f.key === 'password' ? 6 : 1}
+                    placeholder={f.placeholder}
+                    value={(addForm as any)[f.key]}
+                    onChange={(e) => setAddForm(p => ({ ...p, [f.key]: e.target.value }))}
+                    className="w-full bg-black border border-white/10 px-3 py-2 text-xs focus:outline-none focus:border-primary text-white"
+                  />
+                </div>
+              ))}
               <div className="space-y-1.5">
                 <label className="text-[10px] tracking-widest text-zinc-500 uppercase font-semibold">Role</label>
                 <select
                   value={addForm.role}
-                  onChange={e => setAddForm(p => ({ ...p, role: e.target.value as typeof addForm.role }))}
-                  className="w-full bg-black border border-white/10 px-3 py-2 text-xs focus:outline-none focus:border-primary text-zinc-400 focus:text-white"
+                  onChange={(e) => setAddForm(p => ({ ...p, role: e.target.value as typeof addForm.role }))}
+                  className="w-full bg-black border border-white/10 px-3 py-2 text-xs focus:outline-none focus:border-primary text-zinc-400"
                 >
                   <option value="customer">Customer</option>
                   <option value="vendor">Vendor</option>
                   <option value="admin">Admin</option>
                 </select>
               </div>
-
-              {addError && (
-                <p className="text-[10px] text-red-400 bg-red-500/10 border border-red-500/20 p-2.5">⚠ {addError}</p>
-              )}
-
+              {addError && <p className="text-[10px] text-red-400 bg-red-500/10 border border-red-500/20 p-2.5">⚠ {addError}</p>}
               <div className="flex gap-3 pt-2">
-                <button
-                  type="submit"
-                  disabled={addLoading}
-                  className="flex-1 py-2.5 bg-primary text-black font-semibold text-xs tracking-[0.15em] uppercase hover:bg-opacity-90 transition-all disabled:opacity-50"
-                >
+                <button type="submit" disabled={addLoading} className="flex-1 py-2.5 bg-primary text-black font-semibold text-xs tracking-[0.15em] uppercase disabled:opacity-50">
                   {addLoading ? 'Creating...' : 'Create Account'}
                 </button>
-                <button
-                  type="button"
-                  onClick={() => setShowAddForm(false)}
-                  className="px-4 py-2.5 border border-white/10 text-zinc-400 text-xs font-semibold tracking-wider uppercase hover:border-white/30 hover:text-white transition-all"
-                >
+                <button type="button" onClick={() => setShowAddForm(false)} className="px-4 py-2.5 border border-white/10 text-zinc-400 text-xs font-semibold uppercase hover:text-white transition-all">
                   Cancel
                 </button>
               </div>
@@ -256,8 +253,72 @@ export default function AdminUsersPage() {
         </div>
       )}
 
+      {/* Edit Name Modal */}
+      {editUser && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
+          <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={() => setEditUser(null)} />
+          <div className="relative z-10 w-full max-w-sm glass border border-white/10 p-6 space-y-5">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="font-['Cinzel'] text-sm font-bold tracking-widest text-white">EDIT NAME</h3>
+                <p className="text-[10px] text-zinc-500 mt-0.5">{editUser.email}</p>
+              </div>
+              <button onClick={() => setEditUser(null)} className="text-zinc-500 hover:text-white transition-colors"><X className="h-4 w-4" /></button>
+            </div>
+            <form onSubmit={saveEditName} className="space-y-4">
+              <div className="space-y-1.5">
+                <label className="text-[10px] tracking-widest text-zinc-500 uppercase font-semibold">Display Name</label>
+                <input
+                  type="text"
+                  required
+                  minLength={2}
+                  value={editName}
+                  onChange={(e) => setEditName(e.target.value)}
+                  className="w-full bg-black border border-white/10 px-3 py-2 text-xs focus:outline-none focus:border-primary text-white"
+                />
+              </div>
+              {editError && <p className="text-[10px] text-red-400 bg-red-500/10 border border-red-500/20 p-2.5">⚠ {editError}</p>}
+              <div className="flex gap-3">
+                <button type="submit" disabled={editLoading} className="flex-1 py-2.5 bg-primary text-black font-semibold text-xs tracking-[0.15em] uppercase disabled:opacity-50">
+                  {editLoading ? 'Saving...' : 'Save Name'}
+                </button>
+                <button type="button" onClick={() => setEditUser(null)} className="px-4 py-2.5 border border-white/10 text-zinc-400 text-xs font-semibold uppercase hover:text-white transition-all">
+                  Cancel
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Confirm Modal */}
+      {deleteConfirm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
+          <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={() => setDeleteConfirm(null)} />
+          <div className="relative z-10 w-full max-w-sm glass border border-red-500/20 p-6 space-y-5">
+            <h3 className="font-['Cinzel'] text-sm font-bold tracking-widest text-white">DELETE ACCOUNT</h3>
+            <p className="text-xs text-zinc-400 leading-relaxed">
+              Permanently delete <strong className="text-white">{deleteConfirm.displayName}</strong> ({deleteConfirm.email})?
+              This removes the account from Firebase Auth and Firestore and cannot be undone.
+            </p>
+            <div className="flex gap-3">
+              <button
+                onClick={confirmDelete}
+                disabled={deleteLoading}
+                className="flex-1 py-2.5 bg-red-500 text-white font-semibold text-xs tracking-[0.15em] uppercase hover:bg-red-600 transition-all disabled:opacity-50"
+              >
+                {deleteLoading ? 'Deleting...' : 'Delete'}
+              </button>
+              <button onClick={() => setDeleteConfirm(null)} className="px-4 py-2.5 border border-white/10 text-zinc-400 text-xs font-semibold uppercase hover:text-white transition-all">
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Stats */}
-      <div className="grid grid-cols-1 sm:grid-cols-4 gap-5">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-5">
         {[
           { label: 'Total Accounts', value: users.length, color: 'text-white' },
           { label: 'Customers', value: users.filter(u => u.role === 'customer').length, color: 'text-zinc-400' },
@@ -287,18 +348,11 @@ export default function AdminUsersPage() {
           onChange={(e) => setRoleFilter(e.target.value as any)}
           className="bg-black border border-white/10 px-3 py-2 text-xs text-zinc-400 focus:outline-none focus:border-primary focus:text-white w-40"
         >
-          {roleOptions.map((opt) => (
-            <option key={opt.value} value={opt.value}>{opt.label}</option>
-          ))}
+          {roleOptions.map((opt) => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
         </select>
       </div>
 
-      {/* Error */}
-      {error && (
-        <div className="p-4 border border-red-500/20 bg-red-500/5 text-red-400 text-xs rounded">
-          ⚠ {error}
-        </div>
-      )}
+      {error && <div className="p-4 border border-red-500/20 bg-red-500/5 text-red-400 text-xs">⚠ {error}</div>}
 
       {/* Table */}
       <div className="glass border border-white/5 overflow-hidden">
@@ -309,20 +363,16 @@ export default function AdminUsersPage() {
                 <th className="px-5 py-3.5 text-left font-semibold">Name</th>
                 <th className="px-5 py-3.5 text-left font-semibold">Email</th>
                 <th className="px-5 py-3.5 text-left font-semibold">Role</th>
-                <th className="px-5 py-3.5 text-left font-semibold">Vendor ID</th>
                 <th className="px-5 py-3.5 text-left font-semibold">Joined</th>
                 <th className="px-5 py-3.5 text-left font-semibold">Change Role</th>
+                <th className="px-5 py-3.5 text-left font-semibold">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-white/5">
               {loadingUsers ? (
-                <tr>
-                  <td colSpan={6} className="px-5 py-12 text-center text-zinc-600 text-xs">Loading accounts...</td>
-                </tr>
+                <tr><td colSpan={6} className="px-5 py-12 text-center text-zinc-600">Loading accounts...</td></tr>
               ) : filteredUsers.length === 0 ? (
-                <tr>
-                  <td colSpan={6} className="px-5 py-12 text-center text-zinc-600 text-xs">No matching accounts found.</td>
-                </tr>
+                <tr><td colSpan={6} className="px-5 py-12 text-center text-zinc-600">No matching accounts found.</td></tr>
               ) : filteredUsers.map((u) => {
                 const isSelf = u.uid === user.uid;
                 return (
@@ -334,27 +384,44 @@ export default function AdminUsersPage() {
                         <RoleIcon role={u.role} /> {u.role}
                       </span>
                     </td>
-                    <td className="px-5 py-3.5 font-mono text-[10px] text-zinc-600">{u.vendorId || '—'}</td>
                     <td className="px-5 py-3.5 text-zinc-600">{formatDate(u.createdAt)}</td>
                     <td className="px-5 py-3.5">
+                      <div className="flex gap-1.5">
+                        {(['customer', 'vendor', 'admin'] as const).map((role) => (
+                          <button
+                            key={role}
+                            disabled={actionLoading === u.uid || u.role === role}
+                            onClick={() => updateUserRole(u.uid, role)}
+                            className={`px-2.5 py-1 text-[9px] font-semibold uppercase tracking-wider border transition-all rounded-full ${
+                              u.role === role
+                                ? 'border-primary/30 bg-primary/10 text-primary cursor-default'
+                                : 'border-white/10 text-zinc-500 hover:border-primary hover:text-white disabled:opacity-30'
+                            }`}
+                          >
+                            {role}
+                          </button>
+                        ))}
+                      </div>
+                    </td>
+                    <td className="px-5 py-3.5">
                       {isSelf ? (
-                        <span className="text-[9px] text-zinc-600 italic">Current session</span>
+                        <span className="text-[9px] text-zinc-600 italic">—</span>
                       ) : (
-                        <div className="flex gap-1.5">
-                          {(['customer', 'vendor', 'admin'] as const).map((role) => (
-                            <button
-                              key={role}
-                              disabled={actionLoading === u.uid || u.role === role}
-                              onClick={() => updateUserRole(u.uid, role)}
-                              className={`px-2.5 py-1 text-[9px] font-semibold uppercase tracking-wider border transition-all rounded-full ${
-                                u.role === role
-                                  ? 'border-primary/30 bg-primary/10 text-primary cursor-default'
-                                  : 'border-white/10 text-zinc-500 hover:border-primary hover:text-white disabled:opacity-30 disabled:cursor-not-allowed'
-                              }`}
-                            >
-                              {role}
-                            </button>
-                          ))}
+                        <div className="flex items-center gap-2">
+                          <button
+                            onClick={() => { setEditUser(u); setEditName(u.displayName); setEditError(null); }}
+                            title="Edit name"
+                            className="p-1.5 border border-white/10 text-zinc-500 hover:border-primary hover:text-primary transition-all"
+                          >
+                            <Pencil className="h-3 w-3" />
+                          </button>
+                          <button
+                            onClick={() => setDeleteConfirm(u)}
+                            title="Delete account"
+                            className="p-1.5 border border-white/10 text-zinc-500 hover:border-red-500/40 hover:text-red-400 transition-all"
+                          >
+                            <Trash2 className="h-3 w-3" />
+                          </button>
                         </div>
                       )}
                     </td>

@@ -1,11 +1,13 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
-import { ShoppingBag, Sparkles, Compass, ShieldCheck } from 'lucide-react';
+import { ShoppingBag, Compass, ShieldCheck, ChevronLeft, ChevronRight } from 'lucide-react';
 import { formatPrice } from '@/lib/utils';
 import { collection, onSnapshot, query, where } from 'firebase/firestore';
 import { db } from '@/config/firebase';
+
+const FALLBACK_IMAGE = 'https://images.unsplash.com/photo-1490481651871-ab68de25d43d?q=80&w=1600&auto=format&fit=crop';
 
 interface FeaturedProduct {
   id: string;
@@ -19,6 +21,8 @@ interface FeaturedProduct {
 export default function HomePage() {
   const [featured, setFeatured] = useState<FeaturedProduct[]>([]);
   const [featuredLoading, setFeaturedLoading] = useState(true);
+  const [currentSlide, setCurrentSlide] = useState(0);
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   useEffect(() => {
     const q = query(collection(db, 'inventory'), where('isFeatured', '==', true));
@@ -29,33 +33,65 @@ export default function HomePage() {
     return () => unsub();
   }, []);
 
+  useEffect(() => {
+    if (featured.length < 2) return;
+    intervalRef.current = setInterval(() => {
+      setCurrentSlide(prev => (prev + 1) % featured.length);
+    }, 5000);
+    return () => {
+      if (intervalRef.current) clearInterval(intervalRef.current);
+    };
+  }, [featured]);
+
+  const goTo = (idx: number) => {
+    if (intervalRef.current) clearInterval(intervalRef.current);
+    setCurrentSlide(idx);
+    if (featured.length > 1) {
+      intervalRef.current = setInterval(() => {
+        setCurrentSlide(prev => (prev + 1) % featured.length);
+      }, 5000);
+    }
+  };
+
+  const hasSlides = !featuredLoading && featured.length > 0;
+  const currentItem = hasSlides ? featured[currentSlide] : null;
+
   return (
     <div className="w-full relative bg-background pb-20">
 
       {/* HERO */}
       <section className="relative h-[90vh] flex items-center justify-center overflow-hidden border-b border-white/5">
-        <div
-          className="absolute inset-0 z-0 bg-cover bg-center bg-no-repeat filter brightness-[0.4]"
-          style={{
-            backgroundImage: 'url("https://images.unsplash.com/photo-1490481651871-ab68de25d43d?q=80&w=1600&auto=format&fit=crop")',
-          }}
-        />
+
+        {/* Slideshow backgrounds */}
+        {hasSlides ? (
+          featured.map((item, i) => (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              key={item.id}
+              src={item.image}
+              alt=""
+              aria-hidden="true"
+              className={`absolute inset-0 w-full h-full object-cover object-center brightness-[0.35] transition-opacity duration-1000 ${i === currentSlide ? 'opacity-100' : 'opacity-0'}`}
+            />
+          ))
+        ) : (
+          <div
+            className="absolute inset-0 bg-cover bg-center bg-no-repeat brightness-[0.35]"
+            style={{ backgroundImage: `url("${FALLBACK_IMAGE}")` }}
+          />
+        )}
+
         <div className="absolute inset-0 bg-gradient-to-t from-background via-transparent to-transparent z-0" />
 
+        {/* Hero text */}
         <div className="relative z-10 text-center max-w-4xl px-6 space-y-8 animate-fadeIn">
-          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-primary/20 bg-primary/5 text-primary text-[10px] tracking-[0.25em] uppercase font-medium">
-            <Sparkles className="h-3 w-3" /> Paris &bull; Milan &bull; New York
-          </div>
-
           <h1 className="font-['Cinzel'] text-4xl sm:text-6xl md:text-7xl font-bold tracking-[0.15em] text-white leading-tight">
-            CURATED <br />
-            <span className="gold-text">ELEGANCE</span>
+            PREMIUM <br />
+            <span className="gold-text">COLLECTION</span>
           </h1>
-
           <p className="text-zinc-300 max-w-xl mx-auto text-sm sm:text-base leading-relaxed tracking-wider font-light">
-            Indulge in a meticulously curated portfolio of high-fashion statements, bespoke couture, and hand-tailored leather works sourced directly from global ateliers.
+            You can explore the entire collection of GLIMORE LIFE STYLE, featuring exclusive pieces from top-tier independent designers around the world. Each item is handpicked for its exceptional quality and unique style, ensuring you find something truly special.
           </p>
-
           <div className="flex flex-wrap justify-center gap-4 pt-4">
             <Link
               href="/products"
@@ -63,17 +99,56 @@ export default function HomePage() {
             >
               <ShoppingBag className="h-4 w-4" /> Explore Collection
             </Link>
-            <Link
-              href="/products"
-              className="px-8 py-3.5 border border-white/20 text-white font-semibold text-xs tracking-[0.2em] uppercase hover:bg-white/5 transition-all duration-300 rounded-none"
-            >
-              Runway Edit
-            </Link>
           </div>
         </div>
-      </section>
 
-    
+        {/* Current product info — bottom left */}
+        {currentItem && (
+          <div className="absolute bottom-12 left-8 z-10 max-w-xs">
+            <Link href={`/products/${currentItem.id}`} className="group block">
+              <span className="text-[9px] tracking-widest uppercase text-primary font-semibold">{currentItem.category}</span>
+              <p className="font-['Cinzel'] text-white text-sm font-semibold tracking-wide leading-tight group-hover:text-primary transition-colors line-clamp-1 mt-0.5">
+                {currentItem.productName}
+              </p>
+              <p className="text-primary text-xs font-semibold mt-1">{formatPrice(currentItem.price)}</p>
+            </Link>
+          </div>
+        )}
+
+        {/* Arrow controls */}
+        {hasSlides && featured.length > 1 && (
+          <>
+            <button
+              onClick={() => goTo((currentSlide - 1 + featured.length) % featured.length)}
+              className="absolute left-4 top-1/2 -translate-y-1/2 z-10 p-2 bg-black/40 border border-white/10 text-white hover:border-primary hover:text-primary transition-all backdrop-blur-sm"
+              aria-label="Previous slide"
+            >
+              <ChevronLeft className="h-5 w-5" />
+            </button>
+            <button
+              onClick={() => goTo((currentSlide + 1) % featured.length)}
+              className="absolute right-4 top-1/2 -translate-y-1/2 z-10 p-2 bg-black/40 border border-white/10 text-white hover:border-primary hover:text-primary transition-all backdrop-blur-sm"
+              aria-label="Next slide"
+            >
+              <ChevronRight className="h-5 w-5" />
+            </button>
+          </>
+        )}
+
+        {/* Dot indicators */}
+        {hasSlides && featured.length > 1 && (
+          <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-10 flex gap-2">
+            {featured.map((_, i) => (
+              <button
+                key={i}
+                onClick={() => goTo(i)}
+                className={`h-1.5 transition-all duration-300 ${i === currentSlide ? 'w-6 bg-primary' : 'w-1.5 bg-white/30 hover:bg-white/60'}`}
+                aria-label={`Go to slide ${i + 1}`}
+              />
+            ))}
+          </div>
+        )}
+      </section>
 
       {/* FEATURED COLLECTION */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
@@ -149,7 +224,7 @@ export default function HomePage() {
         </div>
       </section>
 
-  {/* VALUE PROPOSITIONS */}
+      {/* VALUE PROPOSITIONS */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
           <div className="glass p-8 text-center border border-white/5 flex flex-col items-center space-y-4">

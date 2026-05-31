@@ -21,7 +21,7 @@ const Navbar: React.FC = () => {
         {/* Logo */}
         <Link href="/" aria-label="GLIMORE LIFE STYLE – Home" className="flex items-center gap-2 group">
         <Image src="/logo.webp" alt="GLIMORE LIFE STYLE Logo" width={80} height={80} className="object-contain" />
-          <span className="font-['Cinzel'] text-2xl font-bold tracking-[0.2em] gold-text transition-all duration-300 group-hover:opacity-90">
+          <span className="hidden sm:inline font-['Cinzel'] text-lg sm:text-2xl font-bold tracking-[0.2em] gold-text transition-all duration-300 group-hover:opacity-90">
             GLIMORE LIFE STYLE
           </span>
         </Link>

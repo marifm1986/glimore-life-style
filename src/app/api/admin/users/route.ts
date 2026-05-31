@@ -97,29 +97,62 @@ export async function PATCH(request: Request) {
     if (!caller) return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
 
     const body = await request.json();
-    const { uid, role } = body as { uid?: string; role?: string };
-    if (!uid || !role || !['customer', 'vendor', 'admin'].includes(role)) {
-      return NextResponse.json({ error: 'Invalid request body' }, { status: 400 });
-    }
+    const { uid, role, displayName } = body as { uid?: string; role?: string; displayName?: string };
+    if (!uid) return NextResponse.json({ error: 'uid is required' }, { status: 400 });
 
-    // Super admins cannot be demoted through the UI
     const targetDoc = await dbAdmin.collection('users').doc(uid).get();
     if (!targetDoc.exists) return NextResponse.json({ error: 'User not found' }, { status: 404 });
     if ((targetDoc.data() as any)?.superAdmin) {
-      return NextResponse.json({ error: 'Cannot change role of a super admin' }, { status: 403 });
+      return NextResponse.json({ error: 'Cannot modify a super admin' }, { status: 403 });
     }
 
-    await dbAdmin.collection('users').doc(uid).update({
-      role,
-      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
-    });
+    const updates: Record<string, any> = { updatedAt: admin.firestore.FieldValue.serverTimestamp() };
 
-    // Keep custom claims in sync
-    await authAdmin.setCustomUserClaims(uid, { role });
+    if (role) {
+      if (!['customer', 'vendor', 'admin'].includes(role)) {
+        return NextResponse.json({ error: 'Invalid role' }, { status: 400 });
+      }
+      updates.role = role;
+      await authAdmin.setCustomUserClaims(uid, { role });
+    }
 
+    if (displayName) {
+      if (displayName.trim().length < 2) {
+        return NextResponse.json({ error: 'Name must be at least 2 characters' }, { status: 400 });
+      }
+      updates.displayName = displayName.trim();
+      await authAdmin.updateUser(uid, { displayName: displayName.trim() });
+    }
+
+    await dbAdmin.collection('users').doc(uid).update(updates);
     return NextResponse.json({ success: true });
   } catch (error: any) {
     console.error('Admin users PATCH error:', error);
-    return NextResponse.json({ error: 'Failed to update user role' }, { status: 500 });
+    return NextResponse.json({ error: 'Failed to update user' }, { status: 500 });
+  }
+}
+
+export async function DELETE(request: Request) {
+  try {
+    const caller = await requireAdmin();
+    if (!caller) return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
+
+    const { uid } = await request.json();
+    if (!uid) return NextResponse.json({ error: 'uid is required' }, { status: 400 });
+    if (uid === caller.uid) return NextResponse.json({ error: 'Cannot delete your own account' }, { status: 400 });
+
+    const targetDoc = await dbAdmin.collection('users').doc(uid).get();
+    if (!targetDoc.exists) return NextResponse.json({ error: 'User not found' }, { status: 404 });
+    if ((targetDoc.data() as any)?.superAdmin) {
+      return NextResponse.json({ error: 'Cannot delete a super admin' }, { status: 403 });
+    }
+
+    await authAdmin.deleteUser(uid);
+    await dbAdmin.collection('users').doc(uid).delete();
+
+    return NextResponse.json({ success: true });
+  } catch (error: any) {
+    console.error('Admin users DELETE error:', error);
+    return NextResponse.json({ error: 'Failed to delete user' }, { status: 500 });
   }
 }

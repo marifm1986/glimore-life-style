@@ -6,9 +6,10 @@ import {
   signInWithEmailAndPassword,
   signOut as fbSignOut,
   createUserWithEmailAndPassword,
+  updateProfile,
 } from 'firebase/auth';
 import { auth, db } from '@/config/firebase';
-import { doc, getDoc, setDoc } from 'firebase/firestore';
+import { doc, getDoc, setDoc, updateDoc } from 'firebase/firestore';
 import { UserProfile } from '@/types';
 
 interface AuthContextType {
@@ -17,6 +18,7 @@ interface AuthContextType {
   login: (email: string, password: string) => Promise<void>;
   register: (email: string, password: string, name: string, role?: 'customer' | 'vendor') => Promise<void>;
   logout: () => Promise<void>;
+  updateName: (displayName: string) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -122,6 +124,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
+  const updateName = async (displayName: string) => {
+    if (!auth.currentUser) throw new Error('Not authenticated');
+    await updateProfile(auth.currentUser, { displayName });
+    await updateDoc(doc(db, 'users', auth.currentUser.uid), { displayName });
+    setUser((prev) => prev ? { ...prev, displayName } : prev);
+  };
+
   const logout = async () => {
     setLoading(true);
     try {
@@ -136,7 +145,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, register, logout }}>
+    <AuthContext.Provider value={{ user, loading, login, register, logout, updateName }}>
       {children}
     </AuthContext.Provider>
   );

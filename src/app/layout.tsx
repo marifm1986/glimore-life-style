@@ -2,17 +2,16 @@ import type { Metadata } from 'next';
 import './globals.css';
 import { AuthProvider } from '@/context/AuthContext';
 import { CartProvider } from '@/context/CartContext';
-import Navbar from '@/components/shared/Navbar';
-import Footer from '@/components/shared/Footer';
+import PublicShell from '@/components/shared/PublicShell';
 
 export const metadata: Metadata = {
-  title: 'GLIMORE STYLE | Luxury Haute Couture & Curated Designer Pieces',
-  description: 'Step into a world of curated elegance. GLIMORE style offers premium apparel, hand-crafted leather goods, and high-fashion accessories from elite independent designers globally.',
+  title: 'GLIMORE LIFE STYLE | Luxury Haute Couture & Curated Designer Pieces',
+  description: 'Step into a world of curated elegance. GLIMORE life style offers premium apparel, hand-crafted leather goods, and high-fashion accessories from elite independent designers globally.',
   keywords: 'luxury fashion, curated clothing, handmade leather, independent designers, boutique ecommerce',
   openGraph: {
-    title: 'GLIMORE STYLE | Luxury Designer Collective',
+    title: 'GLIMORE LIFE STYLE | Luxury Designer Collective',
     description: 'Experience elite multi-vendor fashion and hand-crafted pieces.',
-    url: 'https://glimore.style',
+    url: 'https://glimorelifestyle.vercel.app',
     siteName: 'Glimore Style',
     images: [
       {
@@ -42,9 +41,7 @@ export default function RootLayout({
       <body className="min-h-full flex flex-col bg-background text-foreground selection:bg-primary/30 selection:text-white">
         <AuthProvider>
           <CartProvider>
-            <Navbar />
-            <main className="flex-grow">{children}</main>
-            <Footer />
+            <PublicShell>{children}</PublicShell>
           </CartProvider>
         </AuthProvider>
       </body>
